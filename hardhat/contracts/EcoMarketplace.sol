@@ -43,29 +43,37 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard{
     mapping(uint256 => Bid) public bids;
     mapping(address => bool) public admin;
 
+    constructor(address ngoAddress_, uint256 fee_, string memory version_){
+        
+        ngoAddress = ngoAddress_;
+        admin[msg.sender] = true;
+        version = version_;
+        fee = fee_;
+    }
+
     modifier onlyAdmin(){
-        require(admin[msg.sender], "Only Admin");
+        require(admin[msg.sender], "Admin only");
         _;
     }
 
-    function setFee() external onlyAdmin{
-        //TODO
+    function setFee(uint256 _fee) external onlyAdmin{
+        fee = _fee;
     }
 
-    function setNgoAddress() external onlyAdmin{
-        //TODO
+    function setNgoAddress(address newNgo) external onlyAdmin{
+        ngoAddress = newNgo;
     }
 
-    function setAdmin() external onlyOwner{
-        //TODO
+    function addAdmin(address newAdmin) external onlyOwner{
+        admin[newAdmin] = true;
     }
 
-    function removeAdmin() external onlyOwner{
-        //TODO
+    function removeAdmin(address oldAdmin) external onlyOwner{
+        admin[oldAdmin] = false;
     }
 
-    function setVersion() external onlyAdmin{
-        //TODO
+    function setVersion(string calldata _version) external onlyAdmin{
+        version = _version;
     }
 
     function getSale() public view returns(ExtendedSale memory){
@@ -81,19 +89,19 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard{
     }
 
     function getFee() public view returns(uint256){
-        //TODO
+        return fee;
     }
 
     function getNgoAddress() public view returns(address){
-        //TODO
+        return ngoAddress;
     }
 
     function isAdmin(address adminAddress) public view returns(bool){
-        //TODO
+        return admin[adminAddress];
     }
 
     function getVersion() public view returns(string memory){
-        //TODO
+        return version;
     }
 
     function getOwner() public view returns(address){

@@ -17,114 +17,145 @@ function convertStringArrayToBytes32(array: string[]) {
       let accounts: SignerWithAddress[];
       let ngoAddress: string;
       let ecoMarketAddress: string;
+      let ecoMarketDeploy: Contract;
 
   
       before(async () => {
        
        accounts = await ethers.getSigners();
+       ngoAddress = accounts[1].address;
        
       });
 
       beforeEach (async () => {
       
-        /*
-        const EcoMarket = await ethers.getContractFactory("EcoMarket");
-        const ecoMarketDeploy = await EcoMarket.deploy();
+        
+        const EcoMarket = await ethers.getContractFactory("EcoMarketPlace");
+        ecoMarketDeploy = await EcoMarket.connect(accounts[2]).deploy(ngoAddress, ethers.utils.parseEther("0.05"), "1.0.0");
         await ecoMarketDeploy.deployed();
         ecoMarketAddress = ecoMarketDeploy.address;
-        console.log("EcoMarket deployed to:", ecoMarketAddress);
-      */
+        //console.log("EcoMarket deployed to:", ecoMarketAddress);
+      
       });
         
       
   
     describe("\n \n Deployment + Admin functions", function () {
       it("Should set the right owner", async function () {
-          throw new Error("Not implemented");
+          const owner = await ecoMarketDeploy.owner();
+          expect(owner).to.equal(accounts[2].address);
         
         
       });
   
       it("Should set the right NGO address", async function () {
-          throw new Error("Not implemented");
+          const ngoAddressDeployed = await ecoMarketDeploy.getNgoAddress();
+          expect(ngoAddress).to.equal(ngoAddress);
         
         
       });
   
       it("Should set the correct fee", async function () {
-          throw new Error("Not implemented");
+          const fee = await ecoMarketDeploy.getFee();
+          expect(fee).to.equal(ethers.utils.parseEther("0.05"));
         
-          //
+          
       });
   
       it("Should start at version 1.0.0", async function () {
-          throw new Error("Not implemented");
+          const version = await ecoMarketDeploy.getVersion();
+          expect(version).to.equal("1.0.0");
   
       });
 
      it("Should set the contract creator as admin", async function () {
-          throw new Error("Not implemented");
+          const admin = await ecoMarketDeploy.isAdmin(accounts[2].address);
+          expect(admin).to.equal(true);
 
       });
 
+      it("Should return false for non-admin", async function () {
+        const admin = await ecoMarketDeploy.isAdmin(accounts[3].address);
+        expect(admin).to.equal(false);
+
+    });
+
       it("Should add a new admin", async function () {
-          throw new Error("Not implemented");
+          await ecoMarketDeploy.connect(accounts[2]).addAdmin(accounts[3].address);
+          const admin = await ecoMarketDeploy.isAdmin(accounts[3].address);
+          expect(admin).to.equal(true);
 
       });
 
       it("Should remove an admin", async function () {
-          throw new Error("Not implemented");
+        await ecoMarketDeploy.connect(accounts[2]).addAdmin(accounts[3].address);
+        const admin = await ecoMarketDeploy.isAdmin(accounts[3].address);
+        expect(admin).to.equal(true);
+        await ecoMarketDeploy.connect(accounts[2]).removeAdmin(accounts[3].address);
+        const adminRemoved = await ecoMarketDeploy.isAdmin(accounts[3].address);
+        expect(adminRemoved).to.equal(false);
 
       });
       
       it("Should change the owner", async function () {
-          throw new Error("Not implemented");
+          await ecoMarketDeploy.connect(accounts[2]).transferOwnership(accounts[4].address);
+          const owner = await ecoMarketDeploy.owner();
+          expect(owner).to.equal(accounts[4].address);
 
       });
 
       it("Should change the NGO address", async function () {
-          throw new Error("Not implemented");
+          await ecoMarketDeploy.connect(accounts[2]).setNgoAddress(accounts[5].address);
+          const ngoAddressDeployed = await ecoMarketDeploy.getNgoAddress();
+          expect(ngoAddressDeployed).to.equal(accounts[5].address);
 
       });
 
       it("Should change the fee", async function () {
-          throw new Error("Not implemented");
+          await ecoMarketDeploy.connect(accounts[2]).setFee(ethers.utils.parseEther("0.1"));
+          const fee = await ecoMarketDeploy.getFee();
+          expect(fee).to.equal(ethers.utils.parseEther("0.1"));
 
       });
 
       it("Should change the version", async function () {
-          throw new Error("Not implemented");
+          await ecoMarketDeploy.connect(accounts[2]).setVersion("2.0.0");
+          const version = await ecoMarketDeploy.getVersion();
+          expect(version).to.equal("2.0.0");
 
       });
 
       it("Should revert if not owner - admin addition", async function () {
-          throw new Error("Not implemented");
+          await expect(ecoMarketDeploy.connect(accounts[3]).addAdmin(accounts[4].address)).to.be.revertedWith("Ownable: caller is not the owner");
 
       });
 
       it("Should revert if not admin - fee change", async function () {
-          throw new Error("Not implemented");
+          await expect(ecoMarketDeploy.connect(accounts[3]).setFee(ethers.utils.parseEther("0.1"))).to.be.revertedWith("Admin only");
 
       });
 
       it("Should revert if not admin - version change", async function () {
-          throw new Error("Not implemented");
+          await expect(ecoMarketDeploy.connect(accounts[3]).setVersion("2.0.0")).to.be.revertedWith("Admin only");
         
       });
 
       it("Should revert if not admin - ngo change", async function () {
-          throw new Error("Not implemented");
+          await expect(ecoMarketDeploy.connect(accounts[3]).setNgoAddress(accounts[5].address)).to.be.revertedWith("Admin only");
 
       });
 
       it("Should revert if not owner - admin removal", async function () {
-          throw new Error("Not implemented");
+          await ecoMarketDeploy.connect(accounts[2]).addAdmin(accounts[3].address);
+          await expect(ecoMarketDeploy.connect(accounts[3]).removeAdmin(accounts[4].address)).to.be.revertedWith("Ownable: caller is not the owner");
 
       });
 
       it("Should revert if not owner - owner change", async function () {
-          throw new Error("Not implemented");
-
+          await expect(ecoMarketDeploy.connect(accounts[3]).transferOwnership(accounts[4].address)).to.be.revertedWith("Ownable: caller is not the owner");
+          await ecoMarketDeploy.connect(accounts[2]).addAdmin(accounts[3].address);
+          await expect(ecoMarketDeploy.connect(accounts[3]).transferOwnership(accounts[4].address)).to.be.revertedWith("Ownable: caller is not the owner");
+          
       });
     });
 
