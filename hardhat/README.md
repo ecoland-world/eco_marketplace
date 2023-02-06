@@ -1,4 +1,4 @@
-# EcoLand 
+# EcoMarket
 
 This folder contains Eco-Marketplace's environment for the development of it's Solidity smart contracts.
 
