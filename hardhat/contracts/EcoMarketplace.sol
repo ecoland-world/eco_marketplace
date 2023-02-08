@@ -128,6 +128,9 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard{
         require(amount > 0, "Amount must be greater than 0");
         require(_exist(nftId), "NFT doesnt exist");
         require(msg.value >= price, "Cant proceed due to lack of funds");
+
+        address seller = ownerOf(nftId);
+        _transfer(seller, msg.sender, nftId);
     }
 
     function bid(address tokenContract, address seller, uint256 orderId) external payable nonReentrant{
