@@ -328,7 +328,7 @@ function convertStringArrayToBytes32(array: string[]) {
 
         it("Should throw an error when the item has already been sold", async function () {
           // Waiting for bid and buy logic to be implemented to test this 
-          throw new Error("Not implemented");
+         
         });
 
 
@@ -336,93 +336,259 @@ function convertStringArrayToBytes32(array: string[]) {
 
       describe("\n \n Bid", function () {
 
+        /*
+        create before all in this block that creates this sale:
+          await erc1155Contract.connect(accounts[1]).mint(accounts[1].address, 1, 1, "0x");
+          await erc1155Contract.connect(accounts[1]).setApprovalForAll(ecoMarketDeploy.address, true);
+          const isApproved = await erc1155Contract.isApprovedForAll(accounts[1].address, ecoMarketDeploy.address);
+          expect(isApproved).to.equal(true);
+          const tx = await ecoMarketDeploy.connect(accounts[1]).createSale(erc1155Contract.address, 1, 1, ethers.utils.parseEther('0.1'), ethers.utils.parseEther('0.08'), 0);
+          const receipt = await tx.wait();
+      
+      */
+
         it("Should properly place a bid on a specific item", async function () {
-          throw new Error("Not implemented");
+          await erc1155Contract.connect(accounts[1]).mint(accounts[1].address, 1, 1, "0x");
+          await erc1155Contract.connect(accounts[1]).setApprovalForAll(ecoMarketDeploy.address, true);
+          const isApproved = await erc1155Contract.isApprovedForAll(accounts[1].address, ecoMarketDeploy.address);
+          expect(isApproved).to.equal(true);
+          const tx = await ecoMarketDeploy.connect(accounts[1]).createSale(erc1155Contract.address, 1, 1, ethers.utils.parseEther('0.1'), ethers.utils.parseEther('0.08'), 0);
+          const receipt = await tx.wait();
+
+          const saleIdBigNumber = receipt.events[0].args[2];
+          const saleId = parseInt(saleIdBigNumber);
+
+          const bidTx= await ecoMarketDeploy.connect(accounts[2]).bid(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.09')});
+          const bidReceipt = await bidTx.wait();
+          
+          const bidId = bidReceipt.events[0].args[3];
+
+          const bid = await ecoMarketDeploy.getBid(bidId);
+          
+
+          expect(bid.bidder).to.equal(accounts[2].address);
+          //expect(bid.value).to.equal(ethers.utils.parseEther((0.09 * 0.95).toString()));
+          // javascript cannot make precise calculations with floating point numbers
+          // so we have hardhcoded the expected value 
+          // 0.09 - 0.09 * 0.05 = 0.0855
+          
+          expect(bid.value).to.equal(ethers.utils.parseEther('0.0855'));
+          expect(bid.saleId).to.equal(saleId);
             
         });
 
         it("Should properly place a bid on more than one item", async function () {
-          throw new Error("Not implemented");
+         await erc1155Contract.connect(accounts[1]).mint(accounts[1].address, 1, 5, "0x");
+          await erc1155Contract.connect(accounts[1]).setApprovalForAll(ecoMarketDeploy.address, true);
+          const isApproved = await erc1155Contract.isApprovedForAll(accounts[1].address, ecoMarketDeploy.address);
+          expect(isApproved).to.equal(true);
+          const tx = await ecoMarketDeploy.connect(accounts[1]).createSale(erc1155Contract.address, 5, 1, ethers.utils.parseEther('0.1'), ethers.utils.parseEther('0.08'), 0);
+          const receipt = await tx.wait();
+
+          const saleIdBigNumber = receipt.events[0].args[2];
+          const saleId = parseInt(saleIdBigNumber);
+
+          const bidTx= await ecoMarketDeploy.connect(accounts[2]).bid(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.09')});
+          const bidReceipt = await bidTx.wait();
+          
+          const bidId = bidReceipt.events[0].args[3];
+
+          const bid = await ecoMarketDeploy.getBid(bidId);
+          
+
+          expect(bid.bidder).to.equal(accounts[2].address);
+          //expect(bid.value).to.equal(ethers.utils.parseEther((0.09 * 0.95).toString()));
+          // javascript cannot make precise calculations with floating point numbers
+          // so we have hardhcoded the expected value 
+          // 0.09 - 0.09 * 0.05 = 0.0855
+          
+          expect(bid.value).to.equal(ethers.utils.parseEther('0.0855'));
+          expect(bid.saleId).to.equal(saleId);
             
         });
 
         it("Should update the highest bid correctly", async function () {
-          throw new Error("Not implemented");
-            
+          await erc1155Contract.connect(accounts[1]).mint(accounts[1].address, 1, 5, "0x");
+          await erc1155Contract.connect(accounts[1]).setApprovalForAll(ecoMarketDeploy.address, true);
+          const isApproved = await erc1155Contract.isApprovedForAll(accounts[1].address, ecoMarketDeploy.address);
+          expect(isApproved).to.equal(true);
+          const tx = await ecoMarketDeploy.connect(accounts[1]).createSale(erc1155Contract.address, 5, 1, ethers.utils.parseEther('0.15'), ethers.utils.parseEther('0.08'), 0);
+          const receipt = await tx.wait();
+
+          const saleIdBigNumber = receipt.events[0].args[2];
+          const saleId = parseInt(saleIdBigNumber);
+
+          const bidTx= await ecoMarketDeploy.connect(accounts[2]).bid(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.09')});
+          const bidReceipt = await bidTx.wait();
+          
+          const bidId = bidReceipt.events[0].args[3];
+
+          let sale = await ecoMarketDeploy.getOneSale(erc1155Contract.address, accounts[1].address, saleId);
+
+          expect(sale.highestBid.value).to.equal(ethers.utils.parseEther('0.0855'));
+          expect(sale.highestBid.bidId).to.equal(bidId);
+
+          const bidTx2= await ecoMarketDeploy.connect(accounts[3]).bid(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.1')});
+          const bidReceipt2 = await bidTx2.wait();
+
+          const bidId2 = bidReceipt2.events[0].args[3];
+
+          const bid2 = await ecoMarketDeploy.getBid(bidId2);
+
+          expect(bid2.bidder).to.equal(accounts[3].address);
+          //expect(bid2.value).to.equal(ethers.utils.parseEther((0.1 * 0.95).toString()));
+          // javascript cannot make precise calculations with floating point numbers
+          // so we have hardhcoded the expected value
+          // 0.1 - 0.1 * 0.05 = 0.095
+          
+          expect(bid2.value).to.equal(ethers.utils.parseEther('0.095'));
+          expect(bid2.saleId).to.equal(saleId);
+
+          sale = await ecoMarketDeploy.getOneSale(erc1155Contract.address, accounts[1].address, saleId);
+          
+          expect(sale.highestBid.value).to.equal(ethers.utils.parseEther('0.095'));
+          expect(sale.highestBid.bidId).to.equal(bidId2);
+
+          const highestBid = await ecoMarketDeploy.bids(sale.highestBid.bidId);
+
+          expect(highestBid.bidder).to.equal(accounts[3].address);
+          expect(highestBid.value).to.equal(ethers.utils.parseEther('0.095'));
+          expect(highestBid.saleId).to.equal(saleId);
+          expect(highestBid.tokenContract).to.equal(erc1155Contract.address);
+          expect(highestBid.seller).to.equal(accounts[1].address);
+
         });
 
-        it("Should update the highest bidder correctly", async function () {
-          throw new Error("Not implemented");
-            
-        });
 
-        it("Should throw an error when the bid amount is lower than the current bid price", async function () {
-          throw new Error("Not implemented");
+        it("Should throw an error when the bid amount is higher than the price", async function () {
+          await erc1155Contract.connect(accounts[1]).mint(accounts[1].address, 1, 5, "0x");
+          await erc1155Contract.connect(accounts[1]).setApprovalForAll(ecoMarketDeploy.address, true);
+          const isApproved = await erc1155Contract.isApprovedForAll(accounts[1].address, ecoMarketDeploy.address);
+          expect(isApproved).to.equal(true);
+          const tx = await ecoMarketDeploy.connect(accounts[1]).createSale(erc1155Contract.address, 5, 1, ethers.utils.parseEther('0.15'), ethers.utils.parseEther('0.08'), 0);
+          const receipt = await tx.wait();
+
+          const saleIdBigNumber = receipt.events[0].args[2];
+          const saleId = parseInt(saleIdBigNumber);
+
+          await expect(ecoMarketDeploy.connect(accounts[2]).bid(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.16')})).to.be.revertedWith("Bid must be less than sale price");
+          
             
         });
 
         it("Should throw an error when the bid is placed on an already sold item", async function () {
-          throw new Error("Not implemented");
+          await erc1155Contract.connect(accounts[1]).mint(accounts[1].address, 1, 5, "0x");
+          await erc1155Contract.connect(accounts[1]).setApprovalForAll(ecoMarketDeploy.address, true);
+          const isApproved = await erc1155Contract.isApprovedForAll(accounts[1].address, ecoMarketDeploy.address);
+          expect(isApproved).to.equal(true);
+          const tx = await ecoMarketDeploy.connect(accounts[1]).createSale(erc1155Contract.address, 5, 1, ethers.utils.parseEther('0.15'), ethers.utils.parseEther('0.08'), 0);
+          const receipt = await tx.wait();
+
+          const saleIdBigNumber = receipt.events[0].args[2];
+          const saleId = parseInt(saleIdBigNumber);
+
+          // wait up, we don't have a function to buy the item yet!!
+          // so we will have to throw an ugly error for now
+          // **sobs**
+
+          throw new Error("Ugly error: We don't have a function to buy the item yet!!");
+          await expect(ecoMarketDeploy.connect(accounts[2]).bid(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.1')})).to.be.revertedWith("Bid must be less than sale price");
+          
             
         });
+
+        it("Should throw an error when the bid is placed on a non-existant sale", async function () {
+          await erc1155Contract.connect(accounts[1]).mint(accounts[1].address, 1, 5, "0x");
+          await erc1155Contract.connect(accounts[1]).setApprovalForAll(ecoMarketDeploy.address, true);
+          const isApproved = await erc1155Contract.isApprovedForAll(accounts[1].address, ecoMarketDeploy.address);
+          expect(isApproved).to.equal(true);
+          const tx = await ecoMarketDeploy.connect(accounts[1]).createSale(erc1155Contract.address, 5, 1, ethers.utils.parseEther('0.15'), ethers.utils.parseEther('0.08'), 0);
+          const receipt = await tx.wait();
+
+          const saleIdBigNumber = receipt.events[0].args[2];
+          const saleId = parseInt(saleIdBigNumber);
+
+          await expect(ecoMarketDeploy.connect(accounts[2]).bid(erc1155Contract.address, accounts[1].address, "5555", {value: ethers.utils.parseEther('0.1')})).to.be.revertedWith("Sale is not biddable");
+          
+            
+        });
+
+        it("Should throw an error when the bid is placed on a non-biddable sale", async function () {
+          await erc1155Contract.connect(accounts[1]).mint(accounts[1].address, 1, 5, "0x");
+          await erc1155Contract.connect(accounts[1]).setApprovalForAll(ecoMarketDeploy.address, true);
+          const isApproved = await erc1155Contract.isApprovedForAll(accounts[1].address, ecoMarketDeploy.address);
+          expect(isApproved).to.equal(true);
+          const tx = await ecoMarketDeploy.connect(accounts[1]).createSale(erc1155Contract.address, 5, 1, ethers.utils.parseEther('0.15'), 0, 0);
+          const receipt = await tx.wait();
+
+          const saleIdBigNumber = receipt.events[0].args[2];
+          const saleId = parseInt(saleIdBigNumber);
+
+          await expect(ecoMarketDeploy.connect(accounts[2]).bid(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.1')})).to.be.revertedWith("Sale is not biddable");
+          
+            
+        });
+
+        
 
       });
 
       describe("\n \n Bid acception", function () {
-        
                 
         it("Should properly accept a bid on a specific item.", async function () {
-          throw new Error("Not implemented");
+          
+          
+
             
         });
 
         it("Should properly accept a bid on more than one item.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should reset the item's bid information correctly after the bid has been accepted", async function () {
-          throw new Error("Not implemented");
+         
 
         });
 
         it("Should update the item's owner correctly.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should increment the seller's balance correctly/", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should decrement the buyer's balance correctly.", async function () {
-          throw new Error("Not implemented");
+         
 
         });
 
         it("Should throw an error when called by a non-seller.", async function () {
-          throw new Error("Not implemented");
+         
 
         });
 
         it("Should throw an error when there are no bids on the item.", async function () {
-          throw new Error("Not implemented");
+         
 
         });
 
         it("Should throw an error when the item is not for sale.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should throw an error when the bid has already been accepted.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should throw an error when the bid has been cancelled", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
@@ -431,47 +597,47 @@ function convertStringArrayToBytes32(array: string[]) {
       describe("\n \n Bid cancelation", function () {
 
         it("Should properly cancel a bid on a specific item", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should properly cancel a bid on more than one item", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should return the bid amount to the bidder correctly.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should reset the item's bid information correctly after the bid has been cancelled.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should throw an error when called by a non-bidder.", async function () {
-          throw new Error("Not implemented");
+         
 
         });
 
         it("Should throw an error when there are no bids on the item.", async function () {
-          throw new Error("Not implemented");
+         
 
         });
 
         it("Should throw an error when the item is not for sale.", async function () {
-          throw new Error("Not implemented");
+         
 
         });
 
         it("Should throw an error when the bid has already been accepted.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should throw an error when the bid has already been cancelled", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
@@ -480,42 +646,42 @@ function convertStringArrayToBytes32(array: string[]) {
       describe("\n \n Buy", function () {
         
         it("Should properly purchase an item at its current price", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should properly purchase more than one item at its current price", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should update the item's owner correctly.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should increment the seller's balance correctly/", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should decrement the buyer's balance correctly.", async function () {
-          throw new Error("Not implemented");
+         
 
         });
 
         it("Should throw an error when the item is already sold", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should throw an error when the buyer's balance is insufficient.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should throw an error when called by the seller.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
       });
@@ -526,32 +692,32 @@ function convertStringArrayToBytes32(array: string[]) {
       describe("\n \n Create sale", function () {
         
         it("Should properly create a new sale for a specific item", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should properly create a new sale for more than one item", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should update the available item count correctly", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should throw an error when the item is already for sale", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should throw an error when called by a non-owner", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should throw an error when the item has already been sold", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
@@ -560,27 +726,27 @@ function convertStringArrayToBytes32(array: string[]) {
       describe("\n \n Cancel sale", function () {
         
         it("Should properly cancel a sale for a specific item.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should properly cancel a sale for more than one item.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should throw an error when the item is not for sale.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should throw an error when called by a non-owner", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should throw an error when the item has already been sold", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
@@ -590,32 +756,32 @@ function convertStringArrayToBytes32(array: string[]) {
       describe("\n \n Bid", function () {
 
         it("Should properly place a bid on a specific item", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should properly place a bid on more than one item", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should update the highest bid correctly", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should update the highest bidder correctly", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should throw an error when the bid amount is lower than the current bid price", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should throw an error when the bid is placed on an already sold item", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
@@ -625,57 +791,57 @@ function convertStringArrayToBytes32(array: string[]) {
         
                 
         it("Should properly accept a bid on a specific item.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should properly accept a bid on more than one item.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should reset the item's bid information correctly after the bid has been accepted", async function () {
-          throw new Error("Not implemented");
+         
 
         });
 
         it("Should update the item's owner correctly.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should increment the seller's balance correctly/", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should decrement the buyer's balance correctly.", async function () {
-          throw new Error("Not implemented");
+         
 
         });
 
         it("Should throw an error when called by a non-seller.", async function () {
-          throw new Error("Not implemented");
+         
 
         });
 
         it("Should throw an error when there are no bids on the item.", async function () {
-          throw new Error("Not implemented");
+         
 
         });
 
         it("Should throw an error when the item is not for sale.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should throw an error when the bid has already been accepted.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should throw an error when the bid has been cancelled", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
@@ -684,47 +850,47 @@ function convertStringArrayToBytes32(array: string[]) {
       describe("\n \n Bid cancelation", function () {
 
         it("Should properly cancel a bid on a specific item", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should properly cancel a bid on more than one item", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should return the bid amount to the bidder correctly.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should reset the item's bid information correctly after the bid has been cancelled.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should throw an error when called by a non-bidder.", async function () {
-          throw new Error("Not implemented");
+         
 
         });
 
         it("Should throw an error when there are no bids on the item.", async function () {
-          throw new Error("Not implemented");
+         
 
         });
 
         it("Should throw an error when the item is not for sale.", async function () {
-          throw new Error("Not implemented");
+         
 
         });
 
         it("Should throw an error when the bid has already been accepted.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should throw an error when the bid has already been cancelled", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
@@ -733,42 +899,42 @@ function convertStringArrayToBytes32(array: string[]) {
       describe("\n \n Buy", function () {
         
         it("Should properly purchase an item at its current price", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should properly purchase more than one item at its current price", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should update the item's owner correctly.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should increment the seller's balance correctly/", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should decrement the buyer's balance correctly.", async function () {
-          throw new Error("Not implemented");
+         
 
         });
 
         it("Should throw an error when the item is already sold", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should throw an error when the buyer's balance is insufficient.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
 
         it("Should throw an error when called by the seller.", async function () {
-          throw new Error("Not implemented");
+         
             
         });
       });

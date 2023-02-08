@@ -5,13 +5,15 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 
 contract EcoMarketPlace is Ownable, ReentrancyGuard{
+    using SafeMath for uint256;
 
     struct Bid{
         uint256 value;
-        address contact;
+        address tokenContract;
         address seller;
         uint256 saleId;
         address bidder;
@@ -32,7 +34,7 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard{
 
     struct HighestBid{
         uint256 value;
-        uint256 bidId;
+        bytes32 bidId;
     }
 
     address internal ngoAddress;
@@ -42,9 +44,10 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard{
     uint256 internal ownerBalance;
 
     mapping(address => mapping(address => mapping(uint256 => ExtendedSale))) public sales;
-    mapping(uint256 => Bid) public bids;
+    mapping(bytes32 => Bid) public bids;
     mapping(address => bool) public admin;
 
+    event BidCreated(address, address, address, bytes32, uint256);
     event SaleCreated(address, address, uint256, uint8);
 
     constructor(address ngoAddress_, uint256 fee_, string memory version_){
@@ -84,8 +87,8 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard{
         //TODO
     }
 
-    function getBid() public view returns(Bid memory){
-        //TODO
+    function getBid(bytes32 bidId) public view returns(Bid memory){
+        return bids[bidId];
     }
 
     function getHighestBid() public view returns(HighestBid memory){
@@ -124,8 +127,37 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard{
         //TODO
     }
 
-    function bid() external payable nonReentrant{
-        //TODO
+    function bid(address tokenContract, address seller, uint256 orderId) external payable nonReentrant{
+        require (msg.value > 0, "Bid must be greater than 0");
+        require(sales[tokenContract][seller][orderId].sale.biddable, "Sale is not biddable");
+        require(sales[tokenContract][seller][orderId].sale.amount > 0, "Sale does not exist");
+        require(msg.value < sales[tokenContract][seller][orderId].sale.price, "Bid must be less than sale price");
+        
+        uint256 feeValue = msg.value.mul(fee).div(1e18);
+        uint256 ngoFee = feeValue.mul(20).div(100);
+        ngoBalance = ngoBalance.add(ngoFee);
+        ownerBalance = ownerBalance.add(feeValue - ngoFee);
+
+        uint256 bidValue = msg.value.sub(feeValue);
+
+        bytes32 bidId = keccak256(abi.encodePacked(block.timestamp, msg.sender, orderId));
+
+
+        bids[bidId] = Bid({
+            value: bidValue,
+            tokenContract: tokenContract,
+            seller: seller,
+            saleId: orderId,
+            bidder: msg.sender
+        }); 
+
+        if (bidValue > sales[tokenContract][seller][orderId].highestBid.value){
+            sales[tokenContract][seller][orderId].highestBid.value = bidValue;
+            sales[tokenContract][seller][orderId].highestBid.bidId = bidId;
+        }
+
+        emit BidCreated(tokenContract, seller, msg.sender, bidId, orderId);
+
     }
 
     function acceptBid() external nonReentrant{
