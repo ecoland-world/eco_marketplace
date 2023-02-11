@@ -49,6 +49,7 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard{
 
     event BidCreated(address, address, address, bytes32, uint256);
     event SaleCreated(address, address, uint256, uint8);
+    event NewSale(address tokenContract, uint256 amount, uint256 price, uint256 nftId);
 
     constructor(address ngoAddress_, uint256 fee_, string memory version_){
         
@@ -131,6 +132,12 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard{
 
         address seller = ownerOf(nftId);
         _transfer(seller, msg.sender, nftId);
+
+        // sql operations
+        // contract state update
+        emit NewSale(msg.sender, msg.value , nftId, price);
+        
+
     }
 
     function bid(address tokenContract, address seller, uint256 orderId) external payable nonReentrant{
