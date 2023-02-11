@@ -25,6 +25,7 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
     }
      struct Sale{
         bool biddable;
+        uint256 minBid;
         uint256 price;
         uint256 nftId;
         uint256 amount;
@@ -40,6 +41,13 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
     struct HighestBid{
         uint256 value;
         bytes32 bidId;
+    }
+
+    struct StackHelper{
+        uint256 saleId;
+        uint256 tableId;
+        string tablePrefix;
+        ExtendedSale order;
     }
 
     ITablelandTables private _tableland;
@@ -87,7 +95,7 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
                 Strings.toString(block.chainid),
                 // biddable, receipt and isBid are boolean values
                 // 0 = false, 1 = true
-                " (id integer primary key, tokenContract text, seller text, buyer text, price text, nftId integer, amount integer, timestamp integer, biddable integer, receipt integer, isBid integer);"
+                " (id integer primary key, tokenContract text, seller text, buyer text, price text, nftId integer, amount integer, timestamp integer, receipt integer, isBid integer);"
             )
         );
 
@@ -210,13 +218,23 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
 
     }
 
-    function acceptBid() external nonReentrant{
-        //TODO
+    function acceptBid(uint256 bidId) external nonReentrant{
+        /*
+        didn't write a single thing. Just 
+        require(bids[bidId].value > 0, "Bid does not exist");
+        require(bids[bidId].seller == msg.sender, "You are not the seller");
+        require(sales[bids[bidId].tokenContract][bids[bidId].seller][bids[bidId].saleId].sale.amount > 0, "Sale does not exist");
+
+        uint256 feeValue = bids[bidId].value.mul(fee).div(1e18);
+        uint256 ngoFee = feeValue.mul(20).div(100);
+        ngoBalance = ngoBalance.add(ngoFee);
+        ownerBalance = ownerBalance.add(feeValue - ngoFee);
+
+        uint256 bidValue = bids[bidId].value.sub(feeValue);
+        */
     }
 
     // saleType 0 = erc1155, 1 = erc721
-    // this function is too big. need to refactor it
-    // to stop stack too deep error
     function createSale(address tokenContract, uint256 amount, uint256 nftId, uint256 price, uint256 minBid, uint8 saleType ) external{
         require(amount > 0, "Amount must be greater than 0");
         require(price > 0, "Price must be greater than 0");
@@ -235,10 +253,10 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
             require(IERC721(tokenContract).ownerOf(nftId) == msg.sender, "You are not the owner of this NFT");
             IERC721(tokenContract).approve(address(this), nftId);
         }*/
-
-        sales[tokenContract][msg.sender][totalSales] = ExtendedSale({
+        ExtendedSale memory sale = ExtendedSale({
             sale: Sale({
                 biddable: minBid > 0,
+                minBid: minBid,
                 price: price,
                 nftId: nftId,
                 amount: amount
@@ -250,39 +268,16 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
             assetContract: tokenContract,
             seller: msg.sender
         });
+        sales[tokenContract][msg.sender][totalSales] = sale;
 
-        _tableland.runSQL(
-            address(this),
-            _sAndRTableId,
-            SQLHelpers.toInsert(
-                TABLE_PREFIX, // prefix
-                _sAndRTableId, // table id
-                "id,tokenContract,seller, buyer, price, nftId, amount, timestamp, biddable, receipt, isBid", // column names
-                string.concat(
-                    Strings.toString(totalSales), // Convert to a string
-                    ",",
-                    SQLHelpers.quote(Strings.toHexString(tokenContract)),
-                    ",",
-                    SQLHelpers.quote(Strings.toHexString(msg.sender)),
-                    ",",
-                    SQLHelpers.quote(Strings.toHexString(address(0))),
-                    ",",
-                    SQLHelpers.quote(Strings.toString(price)),
-                    ",",
-                    SQLHelpers.quote(Strings.toString(nftId)),
-                    ",",
-                    SQLHelpers.quote(Strings.toString(amount)),
-                    ",",
-                    SQLHelpers.quote(Strings.toString(block.timestamp)),
-                    ",",
-                    SQLHelpers.quote(Strings.toString(biddable)),
-                    ",",
-                    SQLHelpers.quote(Strings.toString(0)),
-                    ",",
-                    SQLHelpers.quote(Strings.toString(0))
-                	)    
-                )
-            );
+        StackHelper memory stackHelper = StackHelper({
+            saleId: totalSales,
+            tableId: _sAndRTableId,
+            tablePrefix: TABLE_PREFIX,
+            order: sale
+        });
+        insertSale(stackHelper);
+        //insertSale(tokenContract, msg.sender, saleType, biddable, totalSales, amount, price, minBid, nftId, _sAndRTableId, "");
 
         emit SaleCreated(tokenContract, msg.sender, block.timestamp, saleType);
 
@@ -332,5 +327,48 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
     function withdrawOwner() external nonReentrant{
         //TODO
     }
+
+    //function insertSale(address tokenContract, address seller, uint8 saleType, uint8 biddable, uint256 saleId, uint256 amount, uint256 price, uint256 minBid, uint256 nftId, uint256 tableId, string memory tablePrefix ) private {
+    function insertSale(StackHelper memory helper ) private {
+       
+
+        _tableland.runSQL(
+            address(this),
+            helper.tableId,
+            SQLHelpers.toInsert(
+                helper.tablePrefix, // prefix
+                helper.tableId, // table id
+                "id,tokenContract,seller, price, nftId, amount, timestamp", // column names
+                string.concat(
+                    Strings.toString(helper.saleId), // Convert to a string
+                    ",",
+                    SQLHelpers.quote(Strings.toHexString(helper.order.assetContract)),
+                    ",",
+                    SQLHelpers.quote(Strings.toHexString(helper.order.seller)),
+                    ",",
+                    SQLHelpers.quote(Strings.toString(helper.order.sale.price)),
+                    ",",
+                    SQLHelpers.quote(Strings.toString(helper.order.sale.nftId)),
+                    ",",
+                    SQLHelpers.quote(Strings.toString(helper.order.sale.amount)),
+                    ",",
+                    SQLHelpers.quote(Strings.toString(block.timestamp))
+                	)    
+                )
+            );
+    }
+
+    function deleteSale() internal {
+        //TODO
+    }
+
+    function insertBid() internal {
+        //TODO
+    }
+
+    function deleteBid() internal {
+        //TODO
+    }
+    
 
 }    
