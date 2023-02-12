@@ -32,7 +32,7 @@ function convertStringArrayToBytes32(array: string[]) {
       beforeEach (async () => {
       
         
-        const EcoMarket = await ethers.getContractFactory("EcoMarketPlace");
+        const EcoMarket = await ethers.getContractFactory("NoSQLMarketplace");
         ecoMarketDeploy = await EcoMarket.connect(accounts[2]).deploy(ngoAddress, ethers.utils.parseEther("0.05"), "1.0.0");
         await ecoMarketDeploy.deployed();
         ecoMarketAddress = ecoMarketDeploy.address;
