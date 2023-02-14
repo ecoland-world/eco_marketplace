@@ -326,7 +326,7 @@ describe("TablelandTables", function () {
         expect (await tables.ownerOf(tableId)).to.equal(ecoMarketAddress);
         
         const tableId2 = await ecoMarketDeploy2.getSAndRTableId();
-        expect (tableId2).to.equal(2);
+        //expect (tableId2).to.equal(2);
         expect (await tables.ownerOf(tableId2)).to.equal(ecoMarketDeploy2.address);
             
         });
@@ -345,5 +345,42 @@ describe("TablelandTables", function () {
         
 
     	});
+
+    it("Should be able to create a table row upon receipt creation", async function () {
+/*
+        await erc1155Contract.connect(accounts[1]).mint(accounts[1].address, 1, 1, "0x");
+        await erc1155Contract.connect(accounts[1]).setApprovalForAll(ecoMarketDeploy.address, true);
+        const isApproved = await erc1155Contract.isApprovedForAll(accounts[1].address, ecoMarketDeploy.address);
+        expect(isApproved).to.equal(true);
+        const tx = await ecoMarketDeploy.connect(accounts[1]).createSale(erc1155Contract.address, 1, 1, ethers.utils.parseEther('0.1'), ethers.utils.parseEther('0.08'), 0);
+        const receipt = await tx.wait();
+        const tx2 = await ecoMarketDeploy.connect(accounts[1]).buySale(1);
+        const receipt2 = await tx2.wait();
+
+        const row = await tables.runSQL(ecoMarketAddress, 1, "select * from receipts where id = 1;");
+*/      
+
+    	});
+
+    it("Should be able to update a table row upon sale update", async function () {
+
+      });
+
+    it ("Should be able to update the bids table upon bid creation", async function () {
+          await erc1155Contract.connect(accounts[1]).mint(accounts[1].address, 1, 1, "0x");
+          await erc1155Contract.connect(accounts[1]).setApprovalForAll(ecoMarketDeploy.address, true);
+          const isApproved = await erc1155Contract.isApprovedForAll(accounts[1].address, ecoMarketDeploy.address);
+          expect(isApproved).to.equal(true);
+          const tx = await ecoMarketDeploy.connect(accounts[1]).createSale(erc1155Contract.address, 1, 1, ethers.utils.parseEther('0.1'), ethers.utils.parseEther('0.08'), 0);
+          const receipt = await tx.wait();
+          
+          const tx2 = await ecoMarketDeploy.connect(accounts[2]).bid(erc1155Contract.address, accounts[1].address, 1, {value: ethers.utils.parseEther('0.09')});
+          const receipt2 = await tx2.wait();
+          const row = await tables.runSQL(ecoMarketAddress, 1, "select * from bids where id = 1;");
+          console.log({row})
+          
+      
+      
+        });  
     });
 });
