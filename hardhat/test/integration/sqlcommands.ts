@@ -377,7 +377,7 @@ describe("TablelandTables", function () {
           const tx2 = await ecoMarketDeploy.connect(accounts[2]).bid(erc1155Contract.address, accounts[1].address, 1, {value: ethers.utils.parseEther('0.09')});
           const receipt2 = await tx2.wait();
           const row = await tables.runSQL(ecoMarketAddress, 1, "select * from bids where id = 1;");
-          console.log({row})
+          
           
       
       

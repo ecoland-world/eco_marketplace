@@ -644,44 +644,76 @@ function convertStringArrayToBytes32(array: string[]) {
       });
 
       describe("\n \n Buy", function () {
+        let saleId: any;
         
-        it("Should properly purchase an item at its current price", async function () {
-         
-            
+        beforeEach(async function () {
+          await erc1155Contract.connect(accounts[1]).mint(accounts[1].address, 1, 5, "0x");
+          await erc1155Contract.connect(accounts[1]).setApprovalForAll(ecoMarketDeploy.address, true);
+          const isApproved = await erc1155Contract.isApprovedForAll(accounts[1].address, ecoMarketDeploy.address);
+          expect(isApproved).to.equal(true);
+          const tx = await ecoMarketDeploy.connect(accounts[1]).createSale(erc1155Contract.address, 5, 1, ethers.utils.parseEther('0.15'), 0, 0);
+          const receipt = await tx.wait();
+          saleId = parseInt(receipt.events[0].args[2]);
         });
-
-        it("Should properly purchase more than one item at its current price", async function () {
+        it("Should properly purchase any sale at its current price", async function () {
          
+          const etherBalance = await accounts[1].getBalance();
+          const etherBalance2 = await accounts[2].getBalance();
+          
+          const initialBalance = await erc1155Contract.balanceOf(accounts[2].address, 1);
+          expect(initialBalance).to.equal(0);
+          await ecoMarketDeploy.connect(accounts[2]).buy(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.16')});
+          const balance = await erc1155Contract.balanceOf(accounts[2].address, 1);
+          expect(balance).to.equal(5);
+          
+          
+          const newEtherBalance2 = await accounts[2].getBalance();
+          expect(newEtherBalance2).to.be.lessThan(etherBalance2);
+          const newEtherBalance = await accounts[1].getBalance();
+          expect (newEtherBalance).to.be.greaterThan(etherBalance);
+
             
-        });
-
-        it("Should update the item's owner correctly.", async function () {
-         
-            
-        });
-
-        it("Should increment the seller's balance correctly/", async function () {
-         
-            
-        });
-
-        it("Should decrement the buyer's balance correctly.", async function () {
-         
-
         });
 
         it("Should throw an error when the item is already sold", async function () {
-         
+
+          await ecoMarketDeploy.connect(accounts[2]).buy(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.16')});
+          await expect(ecoMarketDeploy.connect(accounts[2]).buy(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.16')})).to.be.revertedWith("Sale does not exist");
+        });
+
+        it("Should increment the buyer's nft count and decrement the seller's", async function () {
+
+          const initialBalanceAccount1 = await erc1155Contract.balanceOf(accounts[1].address, 1);
+          expect(initialBalanceAccount1).to.equal(5);
+          await ecoMarketDeploy.connect(accounts[2]).buy(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.16')});
+          const balance = await erc1155Contract.balanceOf(accounts[2].address, 1);
+          expect(balance).to.equal(5);
+          const finalBalanceAccount1 = await erc1155Contract.balanceOf(accounts[1].address, 1);
+          expect(finalBalanceAccount1).to.equal(0);
             
         });
 
+
         it("Should throw an error when the buyer's balance is insufficient.", async function () {
-         
+          await erc1155Contract.connect(accounts[3]).mint(accounts[3].address, 1, 5, "0x");
+          await erc1155Contract.connect(accounts[3]).setApprovalForAll(ecoMarketDeploy.address, true);
+          const isApproved = await erc1155Contract.isApprovedForAll(accounts[3].address, ecoMarketDeploy.address);
+          expect(isApproved).to.equal(true);
+          const tx = await ecoMarketDeploy.connect(accounts[3]).createSale(erc1155Contract.address, 5, 1, ethers.utils.parseEther('100000'), 0, 0);
+          const receipt = await tx.wait();
+          saleId = parseInt(receipt.events[0].args[2]);
+
+          // this error is what happens in a hardhat's local instance:
+          // "InvalidInputError: sender doesn't have enough funds to send tx. The max upfront cost is: 100000029024472464391552 and the sender's account only has: 9998859280090287214608"
+          
+          // but this is the behaviour on the mainnet/testnet:
+          // await expect(ecoMarketDeploy.connect(accounts[2]).buy(erc1155Contract.address, accounts[3].address, saleId, {value: ethers.utils.parseEther('100000')})).to.be.revertedWith("Insufficient funds");
             
+          
         });
 
         it("Should throw an error when called by the seller.", async function () {
-         
+         await expect(ecoMarketDeploy.connect(accounts[1]).buy(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.16')})).to.be.revertedWith("Buyer = seller");
             
         });
       });
