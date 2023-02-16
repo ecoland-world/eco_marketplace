@@ -50,6 +50,19 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
         ExtendedSale order;
     }
 
+    struct BidHelper{
+        uint256 saleId;
+        uint256 tableId;
+        uint256 bidNumber;
+        uint256 bidValue;
+        string tablePrefix;
+        address bidder;
+        bytes32 bidHash;
+        
+    }
+
+    
+
     ITablelandTables private _tableland;
     address internal ngoAddress;
     string internal version;
@@ -57,9 +70,12 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
     uint256 internal ngoBalance;
     uint256 internal ownerBalance;
     uint256 private totalSales = 0;
+    uint256 private totalBids = 0;
 
     uint256 private _sAndRTableId;
+    uint256 private _bTableId;
     string private salesAndReceiptsTable;
+    string private bidsTable;
 
     string private constant TABLE_PREFIX = "eco_mkt";
 
@@ -95,7 +111,7 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
                 Strings.toString(block.chainid),
                 // biddable, receipt and isBid are boolean values
                 // 0 = false, 1 = true
-                " (id integer primary key, tokenContract text, seller text, buyer text, price text, nftId integer, amount integer, timestamp integer, receipt integer, isBid integer);"
+                " (id integer primary key, tokenContract text, seller text, buyer text, price text, nftId integer, amount integer, timestamp integer, receipt integer);"
             )
         );
 
@@ -107,8 +123,35 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
             Strings.toString(_sAndRTableId)
         );
 
+        _bTableId = _tableland.createTable(
+            address(this),
+            /*
+            *  CREATE TABLE {prefix}_{chainId} (
+            *    id integer primary key,
+            *    message text
+            *  );
+            */
+            string.concat(
+                "CREATE TABLE ",
+                "eco_bid",
+                "_",
+                Strings.toString(block.chainid),
+                // biddable, receipt and isBid are boolean values
+                // 0 = false, 1 = true
+                " (id integer primary key, saleId integer, value integer, hash text);"
+            )
+        );
+
+        bidsTable = string.concat(
+            "eco_bid",
+            "_",
+            Strings.toString(block.chainid),
+            "_",
+            Strings.toString(_bTableId)
+        );
+
         tables[salesAndReceiptsTable] = _sAndRTableId;
-        
+        tables[bidsTable] = _bTableId;
     }
 
     modifier onlyAdmin(){
@@ -214,13 +257,31 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
             sales[tokenContract][seller][orderId].highestBid.bidId = bidId;
         }
 
+
+        totalBids = totalBids.add(1);
+
+        BidHelper memory bidHelper = BidHelper({
+            
+            bidValue: bidValue,
+            tableId: _bTableId,
+            tablePrefix: "eco_bid",
+            bidder: msg.sender,
+            saleId: orderId,
+            bidNumber: totalBids,
+            bidHash: bidId
+        });
+
+        _insertBid(bidHelper);
+
         emit BidCreated(tokenContract, seller, msg.sender, bidId, orderId);
 
     }
 
     function acceptBid(uint256 bidId) external nonReentrant{
         /*
-        didn't write a single thing. Just 
+        didn't write anything. Just let copilot do it's thing
+        */
+        /*
         require(bids[bidId].value > 0, "Bid does not exist");
         require(bids[bidId].seller == msg.sender, "You are not the seller");
         require(sales[bids[bidId].tokenContract][bids[bidId].seller][bids[bidId].saleId].sale.amount > 0, "Sale does not exist");
@@ -358,16 +419,64 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
             );
     }
 
-    function deleteSale() internal {
-        //TODO
+    function deleteSale(StackHelper memory helper ) private {
+        _tableland.runSQL(
+            address(this),
+            helper.tableId,
+            SQLHelpers.toDelete(
+                helper.tablePrefix, // prefix
+                helper.tableId, // table id
+                string.concat(
+                    "id = ",
+                    Strings.toString(helper.saleId) 
+                	)    
+                )
+            );
     }
 
-    function insertBid() internal {
-        //TODO
+    function _insertBid(BidHelper memory helper) private {
+        _tableland.runSQL(
+            address(this),
+            helper.tableId,
+            SQLHelpers.toInsert(
+                helper.tablePrefix, // prefix
+                helper.tableId, // table id
+                "id,saleId, bidder, value, hash", // column names
+                string.concat(
+                    Strings.toString(helper.bidNumber), // Convert to a string
+                    ",",
+                    SQLHelpers.quote(Strings.toString(helper.saleId)),
+                    ",",
+                    SQLHelpers.quote(Strings.toHexString(helper.bidder)),
+                    ",",
+                    SQLHelpers.quote(Strings.toString(helper.bidValue)),
+                    ",",
+                    SQLHelpers.quote(string(abi.encodePacked(helper.bidHash))))
+                	)    
+                );
     }
 
-    function deleteBid() internal {
-        //TODO
+    function deleteBid(BidHelper memory helper) private {
+        _tableland.runSQL(
+            address(this),
+            helper.tableId,
+            SQLHelpers.toDelete(
+                helper.tablePrefix, // prefix
+                helper.tableId, // table id
+                string.concat(
+                    "id = ",
+                    Strings.toString(helper.bidNumber) 
+                	)    
+                )
+            );
+    }
+
+    function getSAndRTableId() public view returns(uint256){
+        return _sAndRTableId;
+    }
+
+    function getSAndRTableName() public view returns(string memory){
+        return salesAndReceiptsTable;
     }
     
 
