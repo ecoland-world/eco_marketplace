@@ -87,6 +87,7 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
     event BidCreated(address, address, address, bytes32, uint256);
     event SaleCreated(address, address, uint256, uint8);
     event SaleCanceled(address, address, uint256);
+    event Purchase(address, address, address, uint256, uint256);
 
     constructor(address ngoAddress_, uint256 fee_, string memory version_, address registry){
         
@@ -219,13 +220,36 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
         //TODO
     }
 
-    function buy(address tokenContract, uint256 amount, uint256 nftId, uint256 price) external payable nonReentrant{
-        /*
-        require(tokenContract != address(0), "Address is non-existent");
-        require(amount > 0, "Amount must be greater than 0");
-        require(_exist(nftId), "NFT doesnt exist");
-        require(msg.value >= price, "Cant proceed due to lack of funds");
-        */
+    function buy(address tokenContract, address seller, uint256 orderId) external payable nonReentrant{
+        require(sales[tokenContract][seller][orderId].sale.amount > 0, "Sale does not exist");
+        require(msg.sender != seller, "Buyer = seller");
+        
+        uint256 feeValue = msg.value.mul(fee).div(1e18);
+        uint256 ngoFee = feeValue.mul(20).div(100);
+        ngoBalance = ngoBalance.add(ngoFee);
+        ownerBalance = ownerBalance.add(feeValue - ngoFee);
+
+        uint256 paymentValue = (msg.value).sub(feeValue);
+        require (paymentValue > sales[tokenContract][seller][orderId].sale.price, "Payment must be greater than sale price");
+
+        
+        IERC1155(tokenContract).safeTransferFrom(seller, msg.sender, sales[tokenContract][seller][orderId].sale.nftId, sales[tokenContract][seller][orderId].sale.amount, "");
+        
+
+        sales[tokenContract][seller][orderId].sale.amount = 0;
+        sales[tokenContract][seller][orderId].sale.price = 0;
+        sales[tokenContract][seller][orderId].sale.biddable = false;
+        sales[tokenContract][seller][orderId].sale.nftId = 0;
+
+        require(payable(seller).send(paymentValue));
+
+        _updateSale(msg.sender, orderId, _sAndRTableId);
+
+        
+
+        emit Purchase(tokenContract, seller, msg.sender, orderId, paymentValue);
+
+        
     }
 
     function bid(address tokenContract, address seller, uint256 orderId) external payable nonReentrant{
@@ -434,11 +458,36 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
             );
     }
 
+    function _updateSale(address buyer , uint256 saleId, uint256 tableId) private {
+        
+            
+        _tableland.runSQL(
+            address(this),
+            tableId,
+            SQLHelpers.toUpdate(
+                TABLE_PREFIX, // prefix
+                tableId, // table id
+                string.concat(
+                    "receipt = ",
+                    Strings.toString(1),
+                    ", buyer = ",
+                    Strings.toHexString(buyer),
+                    ", timestamp = ",
+                    Strings.toString(block.timestamp)
+                	),
+                string.concat(
+                    "id = ",
+                    Strings.toString(saleId) 
+                	)    
+                )
+            );
+    }
+
     function _insertBid(BidHelper memory helper) private {
         _tableland.runSQL(
             address(this),
             helper.tableId,
-            SQLHelpers.toInsert(
+            SQLHelpers.toUpdate(
                 helper.tablePrefix, // prefix
                 helper.tableId, // table id
                 "id,saleId, bidder, value, hash", // column names
