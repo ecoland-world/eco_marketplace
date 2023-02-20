@@ -139,7 +139,7 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
                 Strings.toString(block.chainid),
                 // biddable, receipt and isBid are boolean values
                 // 0 = false, 1 = true
-                " (id integer primary key, saleId integer, value integer, hash text);"
+                " (id integer primary key, saleId integer, bidder text, value integer, hash blob);"
             )
         );
 
@@ -460,8 +460,7 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
 
     function _updateSale(address buyer , uint256 saleId, uint256 tableId) private {
         
-            
-        _tableland.runSQL(
+          _tableland.runSQL(
             address(this),
             tableId,
             SQLHelpers.toUpdate(
@@ -469,25 +468,28 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
                 tableId, // table id
                 string.concat(
                     "receipt = ",
-                    Strings.toString(1),
+                    SQLHelpers.quote(Strings.toString(1)),
                     ", buyer = ",
-                    Strings.toHexString(buyer),
+                    SQLHelpers.quote(Strings.toHexString(buyer)),
                     ", timestamp = ",
-                    Strings.toString(block.timestamp)
+                    SQLHelpers.quote(Strings.toString(block.timestamp))
                 	),
                 string.concat(
                     "id = ",
-                    Strings.toString(saleId) 
+                    SQLHelpers.quote(Strings.toString(saleId))
                 	)    
                 )
             );
     }
 
     function _insertBid(BidHelper memory helper) private {
+        
+        string memory converted = bytes32ToString(helper.bidHash);
+
         _tableland.runSQL(
             address(this),
             helper.tableId,
-            SQLHelpers.toUpdate(
+            SQLHelpers.toInsert(
                 helper.tablePrefix, // prefix
                 helper.tableId, // table id
                 "id,saleId, bidder, value, hash", // column names
@@ -500,7 +502,7 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
                     ",",
                     SQLHelpers.quote(Strings.toString(helper.bidValue)),
                     ",",
-                    SQLHelpers.quote(string(abi.encodePacked(helper.bidHash))))
+                    SQLHelpers.quote(converted))
                 	)    
                 );
     }
@@ -526,6 +528,22 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
 
     function getSAndRTableName() public view returns(string memory){
         return salesAndReceiptsTable;
+    }
+
+    function getBidsTableName() public view returns(string memory){
+        return bidsTable;
+    }
+
+   function bytes32ToString(bytes32 _bytes32) public pure returns (string memory) {
+        uint8 i = 0;
+        while(i < 32 && _bytes32[i] != 0) {
+            i++;
+        }
+        bytes memory bytesArray = new bytes(i);
+        for (i = 0; i < 32 && _bytes32[i] != 0; i++) {
+            bytesArray[i] = _bytes32[i];
+        }
+        return string(bytesArray);
     }
     
 

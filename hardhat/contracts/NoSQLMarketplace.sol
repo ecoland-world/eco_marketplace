@@ -85,7 +85,7 @@ contract NoSQLMarketplace is Ownable, ReentrancyGuard{
     }
 
     function getSale() public view returns(ExtendedSale memory){
-        //TODO
+        
     }
 
     function getBid(bytes32 bidId) public view returns(Bid memory){
@@ -93,7 +93,7 @@ contract NoSQLMarketplace is Ownable, ReentrancyGuard{
     }
 
     function getHighestBid() public view returns(HighestBid memory){
-        //TODO
+        
     }
 
     function getFee() public view returns(uint256){
@@ -121,7 +121,7 @@ contract NoSQLMarketplace is Ownable, ReentrancyGuard{
     }
 
     function getNGOBalance() public view returns(uint256){
-        //TODO
+        return ngoBalance;
     }
 
     function buy(address tokenContract, address seller, uint256 orderId) external payable nonReentrant{
@@ -186,7 +186,7 @@ contract NoSQLMarketplace is Ownable, ReentrancyGuard{
     }
 
     function acceptBid() external nonReentrant{
-        //TODO
+        
     }
 
     // saleType 0 = erc1155, 1 = erc721
@@ -246,11 +246,13 @@ contract NoSQLMarketplace is Ownable, ReentrancyGuard{
     }
 
     function withdrawNgo() external nonReentrant{
-        //TODO
+        
     }
 
     function withdrawOwner() external nonReentrant{
-        //TODO
+  
+      
+
     }
 
 }    

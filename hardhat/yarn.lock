@@ -1299,7 +1299,7 @@
 
 "@tableland/evm@^4.0.0":
   version "4.0.0"
-  resolved "https://registry.yarnpkg.com/@tableland/evm/-/evm-4.0.0.tgz#b1337043ff0ae6cd752c2a62ed3eeb9844d5e3df"
+  resolved "https://registry.npmjs.org/@tableland/evm/-/evm-4.0.0.tgz"
   integrity sha512-HftJLfg2x2R/f6l6PasrQ73Za071+2T6vmJV+p5PwPtXjlb5Pl+V7rtNWAIZgWE8cQY14lWUyhzw4P/+rrEcGA==
 
 "@tableland/local@^1.0.0-pre.1":
@@ -1315,23 +1315,32 @@
     shelljs "^0.8.5"
     yargs "^17.5.1"
 
-"@tableland/sdk@^4.0.0-pre.1", "@tableland/sdk@^4.0.0-pre.8":
-  version "4.0.0-pre.8"
-  resolved "https://registry.yarnpkg.com/@tableland/sdk/-/sdk-4.0.0-pre.8.tgz#93c28b874b9ac18ea68239cc46ff189a526b2e12"
-  integrity sha512-0bG2L0+3ZWevGH/2c1sspS9SXAwI9CD8RWQxnTGly22T5/ZUG8YP1a8bTyO+pDr7zVVVPChypSXhR2cvbzyX2Q==
+"@tableland/sdk@^4.0.0":
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/@tableland/sdk/-/sdk-4.0.0.tgz#3fbd978c09d6e972002308980b390939e0858183"
+  integrity sha512-Tth2jtRH4hDZnId9yKvYMP071gCmxRh4qWlMidPCsFedt304y9mOprz2uDTXWU+AEhDWq05LGej6wiOvWnK8hw==
   dependencies:
     "@tableland/evm" "^4.0.0"
-    "@tableland/sqlparser" "^1.0.3"
+    "@tableland/sqlparser" "^1.0.4"
     ethers "^5.7.2"
 
-"@tableland/sqlparser@^1.0.3":
+"@tableland/sdk@^4.0.0-pre.1":
+  version "4.0.0"
+  resolved "https://registry.npmjs.org/@tableland/sdk/-/sdk-4.0.0.tgz"
+  integrity sha512-Tth2jtRH4hDZnId9yKvYMP071gCmxRh4qWlMidPCsFedt304y9mOprz2uDTXWU+AEhDWq05LGej6wiOvWnK8hw==
+  dependencies:
+    "@tableland/evm" "^4.0.0"
+    "@tableland/sqlparser" "^1.0.4"
+    ethers "^5.7.2"
+
+"@tableland/sqlparser@^1.0.4":
   version "1.0.4"
-  resolved "https://registry.yarnpkg.com/@tableland/sqlparser/-/sqlparser-1.0.4.tgz#7f5e4ce3c6716ec68308dde42e923351a3bf9851"
+  resolved "https://registry.npmjs.org/@tableland/sqlparser/-/sqlparser-1.0.4.tgz"
   integrity sha512-T9EieFjxLb9327nF5HhL5/bYBt7GFL3CgzxJeyU3tjGaQdi/0FQi6/z/jv3jG9pXkAed65lmntHNSHDhkUPjOQ==
 
 "@tableland/validator@^0.0.3":
   version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@tableland/validator/-/validator-0.0.3.tgz#67b553e6c48171c336f8fd26db0a80082322356d"
+  resolved "https://registry.npmjs.org/@tableland/validator/-/validator-0.0.3.tgz"
   integrity sha512-Zzpq96ofuC46uoNj7JwBNxMKoOoxlbVy3rIpFIuyQUagcWlLRumk/JCf4SeWNNEpGu8Y4d+hWsue5uxtKl1Nog==
 
 "@truffle/abi-utils@^0.3.6":
@@ -2584,7 +2593,7 @@ cliui@^7.0.2:
 
 cliui@^8.0.1:
   version "8.0.1"
-  resolved "https://registry.yarnpkg.com/cliui/-/cliui-8.0.1.tgz#0c04b075db02cbfe60dc8e6cf2f5486b1a3608aa"
+  resolved "https://registry.npmjs.org/cliui/-/cliui-8.0.1.tgz"
   integrity sha512-BSeNnyus75C4//NQ9gQt1/csTXyo/8Sb+afLAkzAptFuMsod9HFokGNudZpi/oQV73hnVK+sR+5PVRMd+Dr7YQ==
   dependencies:
     string-width "^4.2.0"
@@ -2796,7 +2805,7 @@ cross-fetch@^3.1.4:
 
 cross-spawn@^7.0.3:
   version "7.0.3"
-  resolved "https://registry.yarnpkg.com/cross-spawn/-/cross-spawn-7.0.3.tgz#f73a85b9d5d41d045551c177e2882d4ac85728a6"
+  resolved "https://registry.npmjs.org/cross-spawn/-/cross-spawn-7.0.3.tgz"
   integrity sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w==
   dependencies:
     path-key "^3.1.0"
@@ -2867,6 +2876,18 @@ css-what@^6.1.0:
   version "6.1.0"
   resolved "https://registry.npmjs.org/css-what/-/css-what-6.1.0.tgz"
   integrity sha512-HTUrgRJ7r4dsZKU6GjmpfRK1O76h97Z8MfS1G0FozR+oF2kG6Vfe8JE6zwrkbxigziPHinCJ+gCPjA9EaBDtRw==
+
+csv-parser@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.npmjs.org/csv-parser/-/csv-parser-3.0.0.tgz"
+  integrity sha512-s6OYSXAK3IdKqYO33y09jhypG/bSDHPuyCme/IdEHfWpLf/jKcpitVFyOC6UemgGk8v7Q5u2XE0vvwmanxhGlQ==
+  dependencies:
+    minimist "^1.2.0"
+
+csv-writer@^1.6.0:
+  version "1.6.0"
+  resolved "https://registry.npmjs.org/csv-writer/-/csv-writer-1.6.0.tgz"
+  integrity sha512-NOx7YDFWEsM/fTRAJjRpPp8t+MKRVvniAg9wQlUKx20MFrPs73WLJhFf5iteqrxNYnsy924K3Iroh3yNHeYd2g==
 
 d@1, d@^1.0.1:
   version "1.0.1"
@@ -3198,7 +3219,7 @@ env-paths@^2.2.0:
 
 erc721a-upgradeable@^4.2.3:
   version "4.2.3"
-  resolved "https://registry.yarnpkg.com/erc721a-upgradeable/-/erc721a-upgradeable-4.2.3.tgz#9e67a9d628f8648a0cd64d17a7a13eeba61deba1"
+  resolved "https://registry.npmjs.org/erc721a-upgradeable/-/erc721a-upgradeable-4.2.3.tgz"
   integrity sha512-EaHbOVDau9drDNpi/gWUHHaopCh35NMATa+3+9ZmdHokw9kfPiDD5RhGRlXA1aZA0ZfYvqPEbaKuSH3PaCY2Ug==
 
 err-code@^3.0.1:
@@ -5449,7 +5470,7 @@ minimatch@5.0.1:
   dependencies:
     brace-expansion "^2.0.1"
 
-minimist@^1.2.5, minimist@^1.2.6:
+minimist@^1.2.0, minimist@^1.2.5, minimist@^1.2.6:
   version "1.2.7"
   resolved "https://registry.npmjs.org/minimist/-/minimist-1.2.7.tgz"
   integrity sha512-bzfL1YUZsP41gmu/qjrEk0Q6i2ix/cVeAhbCbqH9u3zYutS1cLg00qhrD0M2MVdCcx4Sc0UpP2eBWo9rotpq6g==
@@ -5770,7 +5791,7 @@ node-environment-flags@1.0.6:
     object.getownpropertydescriptors "^2.0.3"
     semver "^5.7.0"
 
-node-fetch@2.6.7:
+node-fetch@2.6.7, node-fetch@^2.6.7:
   version "2.6.7"
   resolved "https://registry.npmjs.org/node-fetch/-/node-fetch-2.6.7.tgz"
   integrity sha512-ZjMPFEfVx5j+y2yF35Kzx5sF7kDzxuDj6ziH4FFbOp87zKDZNx8yExJIb05OGF4Nlt9IHFIMBkRl41VdvcNdbQ==
@@ -6142,7 +6163,7 @@ path-is-absolute@^1.0.0:
 
 path-key@^3.1.0:
   version "3.1.1"
-  resolved "https://registry.yarnpkg.com/path-key/-/path-key-3.1.1.tgz#581f6ade658cbba65a0d3380de7753295054f375"
+  resolved "https://registry.npmjs.org/path-key/-/path-key-3.1.1.tgz"
   integrity sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q==
 
 path-parse@^1.0.6, path-parse@^1.0.7:
@@ -6896,14 +6917,14 @@ shallowequal@^1.1.0:
 
 shebang-command@^2.0.0:
   version "2.0.0"
-  resolved "https://registry.yarnpkg.com/shebang-command/-/shebang-command-2.0.0.tgz#ccd0af4f8835fbdc265b82461aaf0c36663f34ea"
+  resolved "https://registry.npmjs.org/shebang-command/-/shebang-command-2.0.0.tgz"
   integrity sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA==
   dependencies:
     shebang-regex "^3.0.0"
 
 shebang-regex@^3.0.0:
   version "3.0.0"
-  resolved "https://registry.yarnpkg.com/shebang-regex/-/shebang-regex-3.0.0.tgz#ae16f1644d873ecad843b0307b143362d4c42172"
+  resolved "https://registry.npmjs.org/shebang-regex/-/shebang-regex-3.0.0.tgz"
   integrity sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==
 
 shelljs@^0.8.3, shelljs@^0.8.5:
@@ -8367,7 +8388,7 @@ which@1.3.1, which@^1.1.1, which@^1.3.1:
 
 which@^2.0.1:
   version "2.0.2"
-  resolved "https://registry.yarnpkg.com/which/-/which-2.0.2.tgz#7c6a8dd0a636a0327e10b59c9286eee93f3f51b1"
+  resolved "https://registry.npmjs.org/which/-/which-2.0.2.tgz"
   integrity sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==
   dependencies:
     isexe "^2.0.0"
@@ -8555,7 +8576,7 @@ yargs-parser@^20.2.2:
 
 yargs-parser@^21.1.1:
   version "21.1.1"
-  resolved "https://registry.yarnpkg.com/yargs-parser/-/yargs-parser-21.1.1.tgz#9096bceebf990d21bb31fa9516e0ede294a77d35"
+  resolved "https://registry.npmjs.org/yargs-parser/-/yargs-parser-21.1.1.tgz"
   integrity sha512-tVpsJW7DdjecAiFpbIB1e3qxIQsE6NoPc5/eTdrbbIC4h0LVsWhnoa3g+m2HclBIujHzsxZ4VJVA+GUuc2/LBw==
 
 yargs-unparser@1.6.0:
@@ -8607,9 +8628,9 @@ yargs@16.2.0:
     yargs-parser "^20.2.2"
 
 yargs@^17.5.1:
-  version "17.6.2"
-  resolved "https://registry.yarnpkg.com/yargs/-/yargs-17.6.2.tgz#2e23f2944e976339a1ee00f18c77fedee8332541"
-  integrity sha512-1/9UrdHjDZc0eOU0HxOHoS78C69UD3JRMvzlJ7S79S2nTaWRA/whGCTV8o9e/N/1Va9YIV7Q4sOxD8VV4pCWOw==
+  version "17.7.0"
+  resolved "https://registry.npmjs.org/yargs/-/yargs-17.7.0.tgz"
+  integrity sha512-dwqOPg5trmrre9+v8SUo2q/hAwyKoVfu8OC1xPHKJGNdxAvPl4sKxL4vBnh3bQz/ZvvGAFeA5H3ou2kcOY8sQQ==
   dependencies:
     cliui "^8.0.1"
     escalade "^3.1.1"

@@ -86,6 +86,36 @@ External references proving this specific case can be considered safe.
 
 Critical severity issues cannot be deployed.
 
+### TableLand scripts
+
+To get started with the custom scripts, we recommend running the public-private key pair generator script located at `scripts/accountCreator.ts` with the following command:
+
+```
+cd hardhat
+yarn hardhat run scripts/accountCreator.ts
+```
+
+On default, this script will output a csv file containing 5 public-private key pairs. This file is located at `hardhat/scripts/accounts.csv` and can be used to test the contracts on Mumbai testnet.
+
+At hardhat.config.ts, we have configured the Mumbai testnet as a network. The first private key must correspond to an account that already has some testnet tokens and it should be placed inside the .env file. The other 5 private keys can be copied from the csv file previously generated.
+
+
+We have deployed two scripts to help test the contracts on Mumbai testnet.
+
+The first one is a script to deploy the contracts, mint some tokens, deploy the marketplace contract, create two tables, create a new sale, bid and purchase this sale. All of that while attempting to demonstrate proper SQL commands on Tableland. 
+This script is located at `scripts/testnetSQL.ts` and can be run with the following command:
+
+```
+yarn hardhat run scripts/testnetSQL.ts --network mumbai
+```
+
+The second one is a script to query Tableland tables using a node.js script. This script is located at `scripts/queryTable.ts` and can be run with the following command:
+
+```
+yarn hardhat run scripts/queryTable.ts
+```
+Make sure to put the table's name in the script before running it, otherwise it will query for a table that doesn't exist.
+
 ### Fuzing
 
 Reserved.
