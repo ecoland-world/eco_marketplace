@@ -1,4 +1,7 @@
 /** @type {import('tailwindcss').Config} */
+
+const { fontFamily } = require('tailwindcss/defaultTheme')
+
 module.exports = {
   content: [
     './pages/**/*.{js,ts,jsx,tsx}',
@@ -7,6 +10,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      // fontFamily: {
+      //   sans: ['var(--font-poppins)', ...fontFamily.sans],
+      // },
       keyframes: {
         updown: {
           '0%': { transform: 'translateY(-5px)' },
