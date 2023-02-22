@@ -6,7 +6,18 @@ module.exports = {
     './app/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
-    extend: {},
+    extend: {
+      keyframes: {
+        updown: {
+          '0%': { transform: 'translateY(-5px)' },
+          '50%': { transform: 'translateY(5px)' },
+          '100%': { transform: 'translateY(-5px)' },
+        },
+      },
+      animation: {
+        updown: 'updown 2s ease-in-out infinite',
+      },
+    },
   },
   plugins: [],
-}
+};
