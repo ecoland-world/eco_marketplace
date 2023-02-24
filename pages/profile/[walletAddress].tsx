@@ -20,6 +20,11 @@ const Profile = () => {
 
   console.log(ownedNFTs);
 
+  if (!ownedNFTs)
+    return (
+      <div className='flex items-center justify-center'>   Loading ...   </div>
+    );
+
   return (
     <div className='min-h-screen flex flex-col w-full space-y-10'>
       <div className='flex justify-evenly w-full'>
@@ -46,6 +51,11 @@ const Profile = () => {
       </div>
       <div className='w-full flex flex-col items-center'>
         <p>My NFTs</p>
+        {ownedNFTs?.length === 0 ? (
+          <div>No NFTs were found...</div>
+        ) : (
+          <div>You have nfts</div>
+        )}
       </div>
     </div>
   );
