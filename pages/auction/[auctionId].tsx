@@ -15,12 +15,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import CountdownTimer from '../../components/CountdownTimer';
 
-const ListingPage: NextPage = () => {
+const AuctionDetailsPage: NextPage = () => {
   const router = useRouter();
   const networkMismatch = useNetworkMismatch();
   const [, switchNetwork] = useNetwork();
 
-  const { listingId } = router.query as { listingId: string };
+  const { auctionId } = router.query as { auctionId: string };
 
   const [loadingListing, setLoadingListing] = useState(true);
 
@@ -34,16 +34,16 @@ const ListingPage: NextPage = () => {
   );
 
   useEffect(() => {
-    if (!listingId || !marketplace) {
+    if (!auctionId || !marketplace) {
       return;
     }
 
     (async () => {
-      const l = await marketplace.getListing(listingId);
+      const l = await marketplace.getListing(auctionId);
       setLoadingListing(false);
       setListing(l);
     })();
-  }, [listingId, marketplace]);
+  }, [auctionId, marketplace]);
 
   if (loadingListing) {
     return <div>Loading...</div>;
@@ -62,7 +62,7 @@ const ListingPage: NextPage = () => {
 
       if (listing?.type === ListingType.Direct) {
         await marketplace?.direct.makeOffer(
-          listingId,
+          auctionId,
           1,
           NATIVE_TOKENS[ChainId.Mumbai].wrapped.address,
           bidAmount
@@ -70,7 +70,7 @@ const ListingPage: NextPage = () => {
       }
 
       if (listing?.type === ListingType.Auction) {
-        await marketplace?.auction.makeBid(listingId, bidAmount);
+        await marketplace?.auction.makeBid(auctionId, bidAmount);
       }
 
       alert(
@@ -93,7 +93,7 @@ const ListingPage: NextPage = () => {
       }
 
       // Simple one-liner for buying the NFT
-      await marketplace?.buyoutListing(listingId, 1);
+      await marketplace?.buyoutListing(auctionId, 1);
       alert('NFT bought successfully!');
     } catch (error) {
       console.error(error);
@@ -114,7 +114,6 @@ const ListingPage: NextPage = () => {
     const dateObj = new Date(unixTimestamp * 1000);
     return dateObj.getTime();
   }
-
   return (
     <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8'>
       <div className='flex flex-col md:flex-row'>
@@ -130,6 +129,12 @@ const ListingPage: NextPage = () => {
             {listing.asset.name}
           </h1>
           <p className='text-gray-600 mb-4'>{listing.asset.description}</p>
+          <div className='text-lg text-center'>
+            Time until auction ends:
+            <CountdownTimer
+              targetDate={bigNumbertoDate(listing.endTimeInEpochSeconds._hex)}
+            />
+          </div>
           <h2 className='text-xl flex space-x-1 items-center'>
             <div>Owner:</div>
             <Image
@@ -168,7 +173,7 @@ const ListingPage: NextPage = () => {
               Buy Now
             </button>
           </div>
-          {/* <form>
+          <form>
             <div className='flex items-center mb-4'>
               <label htmlFor='bidAmount' className='text-gray-700 mr-4'>
                 Bid Amount:
@@ -180,6 +185,7 @@ const ListingPage: NextPage = () => {
                 min='0'
                 step='0.001'
                 className='w-1/2 py-2 px-3 border border-gray-400 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500'
+                onChange={(e) => setBidAmount(e.target.value)}
               />
               <span className='ml-2 text-gray-500'>
                 {listing.buyoutCurrencyValuePerToken.symbol}
@@ -190,11 +196,14 @@ const ListingPage: NextPage = () => {
                 <span>Highest Bid: 10</span>
                 {<Image src={matic} alt='matic' className='w-6 h-6' />}
               </span>
-              <button className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'>
+              <button
+                className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+                onClick={createBidOrOffer}
+              >
                 Place Bid
               </button>
             </div>
-          </form> */}
+          </form>
         </div>
       </div>
       <div className='my-8'>
@@ -240,4 +249,4 @@ const ListingPage: NextPage = () => {
   );
 };
 
-export default ListingPage;
+export default AuctionDetailsPage;

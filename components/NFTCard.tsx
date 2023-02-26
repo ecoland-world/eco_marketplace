@@ -25,7 +25,7 @@ export default function NFTCard({
       <div className='p-2 flex items-center justify-center'>
         <MediaRenderer
           src={nft.tokenUri}
-          style={{ objectFit: 'cover' }}
+          style={{ objectFit: 'contain' }}
           className='rounded-lg'
         />
       </div>

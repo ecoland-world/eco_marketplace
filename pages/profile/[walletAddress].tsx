@@ -15,20 +15,28 @@ const Profile = () => {
 
   const { walletAddress } = router.query;
 
-  const { contract } = useContract(
+  // collection contract
+  const { contract: collectionContract } = useContract(
     '0x4cFfcac1c63f366D183Ae465FE5Fd1dC26126dc5'
   );
   const {
     data: ownedNFTs,
     isLoading,
     error,
-  } = useOwnedNFTs(contract, walletAddress as string);
+  } = useOwnedNFTs(collectionContract, walletAddress as string);
 
   console.log(ownedNFTs);
 
-  if (!ownedNFTs)
+  if (isLoading)
     return (
-      <div className='flex items-center justify-center'>   Loading ...   </div>
+      <div className='flex items-center justify-center'>
+        Loading Profile ...
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className='flex items-center justify-center'>Error Occured!</div>
     );
 
   return (

@@ -22,7 +22,7 @@ const MyNFTCard = ({
       <div className='p-2'>
         <MediaRenderer
           src={nft.tokenUri}
-          style={{ objectFit: 'cover' }}
+          style={{ objectFit: 'contain' }}
           className='rounded-lg'
         />
       </div>
