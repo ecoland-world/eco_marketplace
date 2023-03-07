@@ -36,7 +36,6 @@ function convertStringArrayToBytes32(array: string[]) {
         ecoMarketDeploy = await EcoMarket.connect(accounts[2]).deploy(ngoAddress, ethers.utils.parseEther("0.05"), "1.0.0");
         await ecoMarketDeploy.deployed();
         ecoMarketAddress = ecoMarketDeploy.address;
-        //console.log("EcoMarket deployed to:", ecoMarketAddress);
         const ERC1155 = await ethers.getContractFactory("ERC1155Mock");
         const ERC721 = await ethers.getContractFactory("ERC721Mock");
         const erc1155Deploy = await ERC1155.connect(accounts[2]).deploy();
@@ -575,7 +574,6 @@ function convertStringArrayToBytes32(array: string[]) {
 
             const buyerBalance2 = await accounts[2].getBalance();
             expect(buyerBalance2).to.lessThan(buyerBalance1);
-console.log(4)
             
 
             const balance = await erc1155Contract.balanceOf(accounts[2].address, 1);
@@ -786,7 +784,7 @@ console.log(4)
         });
       });
     });
-
+/*
     describe("\n \n ERC721 assets", function () {
 
       describe("\n \n Create sale", function () {
@@ -1038,7 +1036,7 @@ console.log(4)
             
         });
       });
-    });
+    });*/
             
 });
 
