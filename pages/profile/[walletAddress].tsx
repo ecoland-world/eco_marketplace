@@ -85,6 +85,7 @@ const Profile = () => {
         ) : (
           <div className='w-full grid grid-cols-4 gap-4 mt-4'>
             {ownedNFTs.map((owned) => {
+              
               return (
                 <div key={owned.metadata.id}>
                   <MyNFTCard

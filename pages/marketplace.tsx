@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   useActiveListings,
@@ -9,9 +9,33 @@ import {
 import NFTCard from '../components/NFTCard';
 
 const Marketplace = () => {
+
+  const [sales, setSales]: any = useState({});
+  const [ready, setReady] = useState(false);
+
+ 
+  
+  useEffect(() => {
+    async function fetchSales() {
+      const response: any = await fetch('/api/orders');
+      let res = await response.json();
+      console.log(res.results)
+
+    setSales(res.results)
+    setReady(true)
+    setTimeout(function(){console.log({sales})}, 1000)
+    }
+    fetchSales();
+    
+    
+    }, []);
+    // get all sales and receipts
+
+  
   // marketplace contract
+    
   const { contract: marketplace } = useContract(
-    '0x3632b6971FAf78D32eD0e14C455CBC6882ced7F7',
+    '0x44aD4B3ff964FeDCB2cD4b51fA6be8834753e732',
     'marketplace'
   );
 
@@ -20,12 +44,44 @@ const Marketplace = () => {
 
   console.log(listings);
 
+  /*
+  <a>{sale.amount}</a>
+                <a>{sale.buyer}</a>
+                <a>{sale.price}</a>
+                <a>{sale.id}</a>
+                <a>{sale.nftId}</a>
+                <a>{sale.receipt}</a>
+                <a>{sale.seller}</a>
+                <a>{sale.timestamp}</a>
+                <a>{sale.tokenContract}</a>
+  */
+
   return (
     <div className='flex items-center justify-center min-h-screen'>
-      {loadingListings ? (
+      {!ready ? (
         <div>Loading listings...</div>
       ) : (
         <div className='grid grid-cols-4 gap-4 justify-center items-center'>
+          {
+            sales.map((sale: any) => (
+              <>
+                <Link href={`/listing/${sale.id}`} key={sale.id}>
+                <NFTCard
+                  nft={{
+                    name: "Sale #" + sale.id,
+                    price: sale.price / 10**18,
+                    seller: sale.seller,
+                    id: sale.id,
+                    tokenUri: "https://ipfs.io/ipfs/bafybeihfchpuczufxi4j33zielnsnqkswwzdbbfquaegq2t3tpawdt3lgy",
+                    description: "NFT sale",
+
+                    
+                  }}
+                />
+              </Link>
+              </>
+            ))
+          }
           {/* filter sales */}
           {listings
             ?.filter((listing) => listing.type == 0)
