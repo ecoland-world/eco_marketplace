@@ -25,9 +25,8 @@ const Home: NextPage = () => {
               Eco-friendly Marketplace
             </h1>
             <p className="text-[24px]">
-              Description goes here. Lorem ipsum dolor sit amet, consectetur
-              adipiscing elit, sed do eiusmod tempor incididunt ut labore et
-              dolore magna aliqua.
+              Eco Market is a marketplace that adds a layer of eco-friendly rewards 
+              to the NFT purchase experience. 
             </p>
           </div>
           <div>

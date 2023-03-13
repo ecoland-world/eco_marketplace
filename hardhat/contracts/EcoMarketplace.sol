@@ -85,6 +85,7 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
     mapping(string => uint256) public tables;
 
     event BidCreated(address, address, address, bytes32, uint256);
+    event BidCanceled(address, address, address, uint256, uint256, bytes32);
     event SaleCreated(address, address, uint256, uint8);
     event SaleCanceled(address, address, uint256);
     event Purchase(address, address, address, uint256, uint256);
@@ -153,6 +154,8 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
 
         tables[salesAndReceiptsTable] = _sAndRTableId;
         tables[bidsTable] = _bTableId;
+        
+        require(ngoAddress != address(0), "Ngo address not set");
     }
 
     modifier onlyAdmin(){
@@ -180,16 +183,12 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
         version = _version;
     }
 
-    function getSale() public view returns(ExtendedSale memory){
-        //TODO
+    function getSale(address tokenContract, address seller, uint256 saleId) public view returns(ExtendedSale memory){
+        return sales[tokenContract][seller][saleId];
     }
 
     function getBid(bytes32 bidId) public view returns(Bid memory){
         return bids[bidId];
-    }
-
-    function getHighestBid() public view returns(HighestBid memory){
-        //TODO
     }
 
     function getFee() public view returns(uint256){
@@ -209,15 +208,16 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
     }
 
     function getOwner() public view returns(address){
-        //TODO
+        return owner();
+        
     }
 
     function getOwnerBalance() public view returns(uint256){
-        //TODO
+        return ownerBalance;
     }
 
     function getNGOBalance() public view returns(uint256){
-        //TODO
+        return ngoBalance;
     }
 
     function buy(address tokenContract, address seller, uint256 orderId) external payable nonReentrant{
@@ -242,6 +242,7 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
         sales[tokenContract][seller][orderId].sale.nftId = 0;
 
         require(payable(seller).send(paymentValue));
+        
 
         _updateSale(msg.sender, orderId, _sAndRTableId);
 
@@ -301,22 +302,29 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
 
     }
 
-    function acceptBid(uint256 bidId) external nonReentrant{
-        /*
-        didn't write anything. Just let copilot do it's thing
-        */
-        /*
+
+    function acceptBid(bytes32 bidId) public nonReentrant{
+        
         require(bids[bidId].value > 0, "Bid does not exist");
-        require(bids[bidId].seller == msg.sender, "You are not the seller");
+        require(bids[bidId].seller == msg.sender, "Not the seller");
         require(sales[bids[bidId].tokenContract][bids[bidId].seller][bids[bidId].saleId].sale.amount > 0, "Sale does not exist");
+        require(sales[bids[bidId].tokenContract][bids[bidId].seller][bids[bidId].saleId].sale.biddable, "Sale is not biddable");
 
-        uint256 feeValue = bids[bidId].value.mul(fee).div(1e18);
-        uint256 ngoFee = feeValue.mul(20).div(100);
-        ngoBalance = ngoBalance.add(ngoFee);
-        ownerBalance = ownerBalance.add(feeValue - ngoFee);
+        uint256 bidValue = bids[bidId].value;
 
-        uint256 bidValue = bids[bidId].value.sub(feeValue);
-        */
+        IERC1155(bids[bidId].tokenContract).safeTransferFrom(bids[bidId].seller, bids[bidId].bidder, sales[bids[bidId].tokenContract][bids[bidId].seller][bids[bidId].saleId].sale.nftId, sales[bids[bidId].tokenContract][bids[bidId].seller][bids[bidId].saleId].sale.amount, "");
+
+        sales[bids[bidId].tokenContract][bids[bidId].seller][bids[bidId].saleId].sale.amount = 0;
+        sales[bids[bidId].tokenContract][bids[bidId].seller][bids[bidId].saleId].sale.price = 0;
+        sales[bids[bidId].tokenContract][bids[bidId].seller][bids[bidId].saleId].sale.biddable = false;
+        sales[bids[bidId].tokenContract][bids[bidId].seller][bids[bidId].saleId].sale.nftId = 0;
+        
+        address payable _seller = payable(bids[bidId].seller);
+        require(_seller.send(bidValue));
+
+        _updateSale(msg.sender, bids[bidId].saleId, _sAndRTableId);
+
+        emit Purchase(bids[bidId].tokenContract, bids[bidId].seller, bids[bidId].bidder, bids[bidId].saleId, bidValue);
     }
 
     // saleType 0 = erc1155, 1 = erc721
@@ -397,20 +405,46 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
         emit SaleCanceled(tokenContract, seller, saleId);
     }
 
-    function cancelBid() external nonReentrant{
-        //TODO
-    }
+    function cancelBid(bytes32 bidId) external nonReentrant{
+        
+        
+        // check if msg sender is bidder
+        require(bids[bidId].bidder == msg.sender, "Caller not the bidder");
+        // check if bid is active
+        require(bids[bidId].saleId!= 0, "Bid is not active");
 
-    function withdraw() external nonReentrant{
-        //TODO
+        // change bid status to inactive
+        bids[bidId].saleId = 0;
+        bids[bidId].value = 0;
+
+        // transfer bid value to bidder
+        address payable _bidder = payable(bids[bidId].bidder);
+        require(_bidder.send(bids[bidId].value));
+
+        
+
+        deleteBid(bidId);
+
+        // emit event
+        emit BidCanceled(bids[bidId].tokenContract, bids[bidId].seller, bids[bidId].bidder, bids[bidId].saleId, bids[bidId].value, bidId);
+
     }
 
     function withdrawNgo() external nonReentrant{
-        //TODO
+        // send all ngo funds to ngo address
+        require(msg.sender == owner(), "Caller not the owner");
+        require(ngoAddress != address(0), "Ngo address not set");
+        uint256 valueToSend = ngoBalance;
+        ngoBalance = 0;
+        require(payable(ngoAddress).send(valueToSend));
     }
 
     function withdrawOwner() external nonReentrant{
-        //TODO
+        // send all owner funds to owner address
+        require(msg.sender == owner(), "Caller not the owner");
+        uint256 valueToSend = ownerBalance;
+        ownerBalance = 0;
+        require(payable(owner()).send(valueToSend));
     }
 
     //function insertSale(address tokenContract, address seller, uint8 saleType, uint8 biddable, uint256 saleId, uint256 amount, uint256 price, uint256 minBid, uint256 nftId, uint256 tableId, string memory tablePrefix ) private {
@@ -507,16 +541,18 @@ contract EcoMarketPlace is Ownable, ReentrancyGuard, ERC721Holder {
                 );
     }
 
-    function deleteBid(BidHelper memory helper) private {
+    function deleteBid(bytes32 bidHash) private {
+        string memory converted = bytes32ToString(bidHash);
+    
         _tableland.runSQL(
             address(this),
-            helper.tableId,
+            _bTableId,
             SQLHelpers.toDelete(
-                helper.tablePrefix, // prefix
-                helper.tableId, // table id
+                "eco_bid", // prefix
+                _bTableId, // table id
                 string.concat(
-                    "id = ",
-                    Strings.toString(helper.bidNumber) 
+                    "hash = ",
+                    SQLHelpers.quote(converted)
                 	)    
                 )
             );

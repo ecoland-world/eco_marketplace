@@ -4,9 +4,12 @@ import {
   useContract,
   useNetwork,
   useNetworkMismatch,
+  useContractWrite,
+  Web3Button
 } from '@thirdweb-dev/react';
 
-import { ChainId, ListingType, NATIVE_TOKENS } from '@thirdweb-dev/sdk';
+import { ethers } from "ethers";
+
 
 import { useRouter } from 'next/router';
 
@@ -15,141 +18,106 @@ import Image from 'next/image';
 import Link from 'next/link';
 import CountdownTimer from '../../components/CountdownTimer';
 
-const ListingPage: NextPage = () => {
+function useQuery() {
   const router = useRouter();
-  const networkMismatch = useNetworkMismatch();
-  const [, switchNetwork] = useNetwork();
+  const hasQueryParams =
+    /\[.+\]/.test(router.route) || /\?./.test(router.asPath);
+  const ready = !hasQueryParams || Object.keys(router.query).length > 0;
+  if (!ready) return null;
+  return router.query;
+}
 
-  const { listingId } = router.query as { listingId: string };
+const ListingPage: NextPage = () => {
+  const contractAddress = "0x65DF5017C0EbC026dcccAE20dd7D3Cd751168d0C";
+  const { contract } = useContract(contractAddress);
+  const { mutateAsync, isLoading, error } = useContractWrite(
+    contract,
+    "buy",
+  );
+  
+  const [listingId, setListingId]: any = useState();
 
-  const [loadingListing, setLoadingListing] = useState(true);
-
-  const [bidAmount, setBidAmount] = useState('');
+  // In your components (instead of useRouter)
+  const query = useQuery();
 
   const [listing, setListing] = useState();
 
-  const { contract: marketplace } = useContract(
-    '0x3632b6971FAf78D32eD0e14C455CBC6882ced7F7',
-    'marketplace'
-  );
+  
 
+  const [sale, setSale]: any = useState([]);
+  const [ready, setReady] = useState(false);
+  const [shortenedSeller, setShortenedSeller] = useState('');
+let price;
+
+ 
+  
   useEffect(() => {
-    if (!listingId || !marketplace) {
+    if (!query) {
       return;
     }
-
-    (async () => {
-      const l = await marketplace.getListing(listingId);
-      setLoadingListing(false);
-      setListing(l);
-    })();
-  }, [listingId, marketplace]);
-
-  if (loadingListing) {
-    return <div>Loading...</div>;
-  }
-
-  if (!listing) {
-    return <div>Listing not found</div>;
-  }
-
-  async function createBidOrOffer() {
-    try {
-      if (networkMismatch) {
-        switchNetwork && switchNetwork(2);
-        return;
-      }
-
-      if (listing?.type === ListingType.Direct) {
-        await marketplace?.direct.makeOffer(
-          listingId,
-          1,
-          NATIVE_TOKENS[ChainId.Mumbai].wrapped.address,
-          bidAmount
-        );
-      }
-
-      if (listing?.type === ListingType.Auction) {
-        await marketplace?.auction.makeBid(listingId, bidAmount);
-      }
-
-      alert(
-        `${
-          listing?.type === ListingType.Auction ? 'Bid' : 'Offer'
-        } created successfully!`
-      );
-    } catch (error) {
-      console.error(error);
-      alert(error);
+    async function fetchSales() {
+      const response: any = await fetch('/api/orders');
+      
+      //console.log({router})
+      let res = await response.json();
+      
+      setSale(res.results[parseInt(query.listingId as string) - 1])
+      //setShortenedSeller(shortenAddress(sale.seller))
+	
+    
     }
-  }
+    fetchSales();
+    
+    
+    }, [query]);
 
-  async function buyNft() {
-    try {
-      // Ensure user is on the correct network
-      if (networkMismatch) {
-        switchNetwork && switchNetwork(2);
-        return;
-      }
+    setTimeout(function(){
+      price = (sale.price * 1.06)
+      setReady(true)
 
-      // Simple one-liner for buying the NFT
-      await marketplace?.buyoutListing(listingId, 1);
-      alert('NFT bought successfully!');
-    } catch (error) {
-      console.error(error);
-      alert(error);
-    }
-  }
 
-  console.log(listing);
-
-  function shortenAddress(address: string, chars = 4) {
-    const prefix = address.substring(0, chars);
-    const suffix = address.substring(address.length - chars);
-    return `${prefix}...${suffix}`;
-  }
-
-  function bigNumbertoDate(bignumber) {
-    const unixTimestamp = parseInt(bignumber, 16);
-    const dateObj = new Date(unixTimestamp * 1000);
-    return dateObj.getTime();
-  }
+}, 2000)
 
   return (
     <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8'>
+      
+      {!ready ? (
+        <div>Loading listings...</div>
+      ) : (
+        <div>
       <div className='flex flex-col md:flex-row'>
         <div className='md:w-1/2'>
           <img
             className='w-full h-auto rounded-lg shadow-lg border'
-            src={listing.asset.image}
+            src= "https://ipfs.io/ipfs/bafybeihfchpuczufxi4j33zielnsnqkswwzdbbfquaegq2t3tpawdt3lgy"
             alt='NFT Image'
           />
         </div>
         <div className='md:w-1/2 md:pl-8'>
           <h1 className='text-3xl font-medium text-gray-900 mb-2'>
-            {listing.asset.name}
+            Sale #{sale.id}
           </h1>
-          <p className='text-gray-600 mb-4'>{listing.asset.description}</p>
+          <p className='text-gray-600 mb-4'>NFT Sale</p>
           <h2 className='text-xl flex space-x-1 items-center'>
             <div>Owner:</div>
             <Image
               className='w-8 h-8 rounded-full mr-2 bg-slate-300'
-              src={`https://api.dicebear.com/5.x/miniavs/png?seed=${listing.sellerAddress}`}
+              src={`https://api.dicebear.com/5.x/miniavs/png?seed=${sale.seller}`}
               alt='avatar'
               width={100}
               height={100}
             />
             <Link
-              href={`../profile/${listing.sellerAddress}`}
+              href={`../profile/${sale.seller}`}
               className='hover:text-green-600 hover:cursor-pointer'
             >
-              {shortenAddress(listing.sellerAddress)}
+              {sale.seller}
             </Link>
           </h2>
           <div className='flex items-center justify-between mb-4 mt-4'>
             <span className='text-gray-700 text-xl font-medium flex space-x-1 items-center'>
               <span>
-                Price: {listing.buyoutCurrencyValuePerToken.displayValue}{' '}
+                Price: {sale.price/10**18}{' '}
               </span>
               {
                 <Image
@@ -161,12 +129,19 @@ const ListingPage: NextPage = () => {
                 />
               }
             </span>
-            <button
-              className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
-              onClick={buyNft}
-            >
-              Buy Now
-            </button>
+            <Web3Button
+              contractAddress={contractAddress}
+            // Calls the "setName" function on your smart contract with "My Name" as the first argument
+            action={() => mutateAsync([sale.tokenContract, sale.seller, sale.id,
+	{
+            gasLimit: 1000000, // override default gas limit
+            value: (price.toString()) , // send 0.1 ether with the contract call
+          },
+])}
+           >
+        Buy Now
+      </Web3Button>
+            
           </div>
           {/* <form>
             <div className='flex items-center mb-4'>
@@ -236,8 +211,11 @@ const ListingPage: NextPage = () => {
           </li>
         </ul>
       </div>
+      </div>
+      )}
     </div>
   );
 };
+
 
 export default ListingPage;

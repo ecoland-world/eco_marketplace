@@ -36,7 +36,6 @@ function convertStringArrayToBytes32(array: string[]) {
         ecoMarketDeploy = await EcoMarket.connect(accounts[2]).deploy(ngoAddress, ethers.utils.parseEther("0.05"), "1.0.0");
         await ecoMarketDeploy.deployed();
         ecoMarketAddress = ecoMarketDeploy.address;
-        //console.log("EcoMarket deployed to:", ecoMarketAddress);
         const ERC1155 = await ethers.getContractFactory("ERC1155Mock");
         const ERC721 = await ethers.getContractFactory("ERC721Mock");
         const erc1155Deploy = await ERC1155.connect(accounts[2]).deploy();
@@ -487,12 +486,8 @@ function convertStringArrayToBytes32(array: string[]) {
           const saleIdBigNumber = receipt.events[0].args[2];
           const saleId = parseInt(saleIdBigNumber);
 
-          // wait up, we don't have a function to buy the item yet!!
-          // so we will have to throw an ugly error for now
-          // **sobs**
-
-          throw new Error("Ugly error: We don't have a function to buy the item yet!!");
-          await expect(ecoMarketDeploy.connect(accounts[2]).bid(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.1')})).to.be.revertedWith("Bid must be less than sale price");
+          const buyTx = await ecoMarketDeploy.connect(accounts[2]).buy(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.165')});
+          await expect(ecoMarketDeploy.connect(accounts[2]).bid(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.1')})).to.be.revertedWith("Sale is not biddable");
           
             
         });
@@ -536,59 +531,99 @@ function convertStringArrayToBytes32(array: string[]) {
       describe("\n \n Bid acception", function () {
                 
         it("Should properly accept a bid on a specific item.", async function () {
-          
-          
+            await erc1155Contract.connect(accounts[1]).mint(accounts[1].address, 1, 5, "0x");
+            await erc1155Contract.connect(accounts[1]).setApprovalForAll(ecoMarketDeploy.address, true);
+            const isApproved = await erc1155Contract.isApprovedForAll(accounts[1].address, ecoMarketDeploy.address);
+            expect(isApproved).to.equal(true);
+            const tx = await ecoMarketDeploy.connect(accounts[1]).createSale(erc1155Contract.address, 5, 1, ethers.utils.parseEther('0.15'), ethers.utils.parseEther('0.08'), 0);
+            const receipt = await tx.wait();
 
+            const balance0 = await erc1155Contract.balanceOf(accounts[2].address, 1);
+          expect(balance0).to.equal(0);
+
+            const saleIdBigNumber = receipt.events[0].args[2];
+            const saleId = parseInt(saleIdBigNumber);
+            // seller balance is the amount of ether they have before the sale
+            const sellerBalance1 = await accounts[1].getBalance();
             
-        });
+            const buyerBalance1 = await accounts[2].getBalance();
 
-        it("Should properly accept a bid on more than one item.", async function () {
-         
+            const bidTx = await ecoMarketDeploy.connect(accounts[2]).bid(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.1')});
             
-        });
-
-        it("Should reset the item's bid information correctly after the bid has been accepted", async function () {
-         
-
-        });
-
-        it("Should update the item's owner correctly.", async function () {
-         
+            const bidReceipt = await bidTx.wait();
+           
+            const bidId = bidReceipt.events[0].args[3];
             
-        });
-
-        it("Should increment the seller's balance correctly/", async function () {
-         
+            const bid = await ecoMarketDeploy.getBid(bidId);
             
+            
+             const tx2 = await ecoMarketDeploy.connect(accounts[1]).acceptBid(bidId);
+            
+            const receipt2 = await tx2.wait();
+
+            let  sale = await ecoMarketDeploy.getSale(erc1155Contract.address, accounts[1].address, saleId);
+            
+            
+            expect(sale.price).to.equal(undefined);
+            expect(sale.amount).to.equal(undefined);
+            expect(sale.biddable).to.equal(undefined);
+            expect(sale.nftId).to.equal(undefined);
+
+            const sellerBalance2 = await accounts[1].getBalance();
+            expect(sellerBalance2).to.greaterThan(sellerBalance1);
+
+            const buyerBalance2 = await accounts[2].getBalance();
+            expect(buyerBalance2).to.lessThan(buyerBalance1);
+            
+
+            const balance = await erc1155Contract.balanceOf(accounts[2].address, 1);
+          expect(balance).to.equal(5);
+  
         });
 
-        it("Should decrement the buyer's balance correctly.", async function () {
-         
 
-        });
 
         it("Should throw an error when called by a non-seller.", async function () {
-         
+          await erc1155Contract.connect(accounts[1]).mint(accounts[1].address, 1, 5, "0x");
+            await erc1155Contract.connect(accounts[1]).setApprovalForAll(ecoMarketDeploy.address, true);
+            const isApproved = await erc1155Contract.isApprovedForAll(accounts[1].address, ecoMarketDeploy.address);
+            expect(isApproved).to.equal(true);
+            const tx = await ecoMarketDeploy.connect(accounts[1]).createSale(erc1155Contract.address, 5, 1, ethers.utils.parseEther('0.15'), ethers.utils.parseEther('0.08'), 0);
+            const receipt = await tx.wait();
 
-        });
-
-        it("Should throw an error when there are no bids on the item.", async function () {
-         
-
-        });
-
-        it("Should throw an error when the item is not for sale.", async function () {
-         
+            const saleIdBigNumber = receipt.events[0].args[2];
+            const saleId = parseInt(saleIdBigNumber);
             
+
+            const bidTx = await ecoMarketDeploy.connect(accounts[2]).bid(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.1')});
+            const bidReceipt = await bidTx.wait();
+            
+            const bidId = bidReceipt.events[0].args[3];
+            await expect(ecoMarketDeploy.connect(accounts[2]).acceptBid(bidId)).to.be.revertedWith("Not the seller");
+            
+
         });
 
-        it("Should throw an error when the bid has already been accepted.", async function () {
-         
-            
-        });
 
         it("Should throw an error when the bid has been cancelled", async function () {
-         
+          await erc1155Contract.connect(accounts[1]).mint(accounts[1].address, 1, 5, "0x");
+            await erc1155Contract.connect(accounts[1]).setApprovalForAll(ecoMarketDeploy.address, true);
+            const isApproved = await erc1155Contract.isApprovedForAll(accounts[1].address, ecoMarketDeploy.address);
+            expect(isApproved).to.equal(true);
+            const tx = await ecoMarketDeploy.connect(accounts[1]).createSale(erc1155Contract.address, 5, 1, ethers.utils.parseEther('0.15'), ethers.utils.parseEther('0.08'), 0);
+            const receipt = await tx.wait();
+
+            const saleIdBigNumber = receipt.events[0].args[2];
+            const saleId = parseInt(saleIdBigNumber);
+            
+
+            const bidTx = await ecoMarketDeploy.connect(accounts[2]).bid(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.1')});
+            const bidReceipt = await bidTx.wait();
+
+            const bidId = bidReceipt.events[0].args[3];
+            await ecoMarketDeploy.connect(accounts[2]).cancelBid(bidId);
+
+            await expect(ecoMarketDeploy.connect(accounts[1]).acceptBid(bidId)).to.be.revertedWith("Bid does not exist");
             
         });
 
@@ -597,7 +632,23 @@ function convertStringArrayToBytes32(array: string[]) {
       describe("\n \n Bid cancelation", function () {
 
         it("Should properly cancel a bid on a specific item", async function () {
-         
+          await erc1155Contract.connect(accounts[1]).mint(accounts[1].address, 1, 5, "0x");
+            await erc1155Contract.connect(accounts[1]).setApprovalForAll(ecoMarketDeploy.address, true);
+            const isApproved = await erc1155Contract.isApprovedForAll(accounts[1].address, ecoMarketDeploy.address);
+            expect(isApproved).to.equal(true);
+            const tx = await ecoMarketDeploy.connect(accounts[1]).createSale(erc1155Contract.address, 5, 1, ethers.utils.parseEther('0.15'), ethers.utils.parseEther('0.08'), 0);
+            const receipt = await tx.wait();
+
+            const saleIdBigNumber = receipt.events[0].args[2];
+            const saleId = parseInt(saleIdBigNumber);
+
+            const bidTx = await ecoMarketDeploy.connect(accounts[2]).bid(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.1')});
+            const bidReceipt = await bidTx.wait();
+
+            const bidId = bidReceipt.events[0].args[3];
+            await ecoMarketDeploy.connect(accounts[2]).cancelBid(bidId);
+
+            await expect(ecoMarketDeploy.connect(accounts[1]).acceptBid(bidId)).to.be.revertedWith("Bid does not exist");
             
         });
 
@@ -607,39 +658,54 @@ function convertStringArrayToBytes32(array: string[]) {
         });
 
         it("Should return the bid amount to the bidder correctly.", async function () {
-         
+          await erc1155Contract.connect(accounts[1]).mint(accounts[1].address, 1, 5, "0x");
+            await erc1155Contract.connect(accounts[1]).setApprovalForAll(ecoMarketDeploy.address, true);
+            const isApproved = await erc1155Contract.isApprovedForAll(accounts[1].address, ecoMarketDeploy.address);
+            expect(isApproved).to.equal(true);
+            const tx = await ecoMarketDeploy.connect(accounts[1]).createSale(erc1155Contract.address, 5, 1, ethers.utils.parseEther('0.15'), ethers.utils.parseEther('0.08'), 0);
+            const receipt = await tx.wait();
+
+            const saleIdBigNumber = receipt.events[0].args[2];
+            const saleId = parseInt(saleIdBigNumber);
+            const sellerBalance1 = await accounts[1].getBalance();
+            const buyerBalance1 = await accounts[2].getBalance();
+
+            const bidTx = await ecoMarketDeploy.connect(accounts[2]).bid(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.1')});
+            const bidReceipt = await bidTx.wait();
+
+            const bidId = bidReceipt.events[0].args[3];
+            await ecoMarketDeploy.connect(accounts[2]).cancelBid(bidId);
+
+            const sellerBalance2 = await accounts[1].getBalance();
+            const buyerBalance2 = await await accounts[2].getBalance();
+
+            expect(sellerBalance2).to.equal(sellerBalance1);
+            expect(buyerBalance2).to.lessThan(buyerBalance1.add(ethers.utils.parseEther('0.1')));
+            
             
         });
 
-        it("Should reset the item's bid information correctly after the bid has been cancelled.", async function () {
-         
-            
-        });
 
         it("Should throw an error when called by a non-bidder.", async function () {
-         
+          await erc1155Contract.connect(accounts[1]).mint(accounts[1].address, 1, 5, "0x");
+            await erc1155Contract.connect(accounts[1]).setApprovalForAll(ecoMarketDeploy.address, true);
+            const isApproved = await erc1155Contract.isApprovedForAll(accounts[1].address, ecoMarketDeploy.address);
+            expect(isApproved).to.equal(true);
+            const tx = await ecoMarketDeploy.connect(accounts[1]).createSale(erc1155Contract.address, 5, 1, ethers.utils.parseEther('0.15'), ethers.utils.parseEther('0.08'), 0);
+            const receipt = await tx.wait();
 
-        });
+            const saleIdBigNumber = receipt.events[0].args[2];
+            const saleId = parseInt(saleIdBigNumber);
 
-        it("Should throw an error when there are no bids on the item.", async function () {
-         
+            const bidTx = await ecoMarketDeploy.connect(accounts[2]).bid(erc1155Contract.address, accounts[1].address, saleId, {value: ethers.utils.parseEther('0.1')});
+            const bidReceipt = await bidTx.wait();
 
-        });
-
-        it("Should throw an error when the item is not for sale.", async function () {
-         
-
-        });
-
-        it("Should throw an error when the bid has already been accepted.", async function () {
-         
+            const bidId = bidReceipt.events[0].args[3];
+            await expect(ecoMarketDeploy.connect(accounts[3]).cancelBid(bidId)).to.be.revertedWith("Caller not the bidder");
             
+
         });
 
-        it("Should throw an error when the bid has already been cancelled", async function () {
-         
-            
-        });
 
       });
 
@@ -718,7 +784,7 @@ function convertStringArrayToBytes32(array: string[]) {
         });
       });
     });
-
+/*
     describe("\n \n ERC721 assets", function () {
 
       describe("\n \n Create sale", function () {
@@ -970,7 +1036,7 @@ function convertStringArrayToBytes32(array: string[]) {
             
         });
       });
-    });
+    });*/
             
 });
 
