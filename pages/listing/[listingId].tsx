@@ -8,6 +8,8 @@ import {
   Web3Button
 } from '@thirdweb-dev/react';
 
+import { ethers } from "ethers";
+
 
 import { useRouter } from 'next/router';
 
@@ -26,7 +28,7 @@ function useQuery() {
 }
 
 const ListingPage: NextPage = () => {
-  const contractAddress = "{{0x44aD4B3ff964FeDCB2cD4b51fA6be8834753e732}}";
+  const contractAddress = "0x65DF5017C0EbC026dcccAE20dd7D3Cd751168d0C";
   const { contract } = useContract(contractAddress);
   const { mutateAsync, isLoading, error } = useContractWrite(
     contract,
@@ -45,7 +47,7 @@ const ListingPage: NextPage = () => {
   const [sale, setSale]: any = useState([]);
   const [ready, setReady] = useState(false);
   const [shortenedSeller, setShortenedSeller] = useState('');
-
+let price;
 
  
   
@@ -61,6 +63,7 @@ const ListingPage: NextPage = () => {
       
       setSale(res.results[parseInt(query.listingId as string) - 1])
       //setShortenedSeller(shortenAddress(sale.seller))
+	
     
     }
     fetchSales();
@@ -69,8 +72,11 @@ const ListingPage: NextPage = () => {
     }, [query]);
 
     setTimeout(function(){
-      
-      setReady(true)}, 2000)
+      price = (sale.price * 1.06)
+      setReady(true)
+
+
+}, 2000)
 
   return (
     <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8'>
@@ -126,7 +132,12 @@ const ListingPage: NextPage = () => {
             <Web3Button
               contractAddress={contractAddress}
             // Calls the "setName" function on your smart contract with "My Name" as the first argument
-            action={() => mutateAsync([sale.tokenContract, sale.seller, sale.id])}
+            action={() => mutateAsync([sale.tokenContract, sale.seller, sale.id,
+	{
+            gasLimit: 1000000, // override default gas limit
+            value: (price.toString()) , // send 0.1 ether with the contract call
+          },
+])}
            >
         Buy Now
       </Web3Button>

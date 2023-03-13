@@ -35,7 +35,7 @@ const Marketplace = () => {
   // marketplace contract
     
   const { contract: marketplace } = useContract(
-    '0x44aD4B3ff964FeDCB2cD4b51fA6be8834753e732',
+    '0x65DF5017C0EbC026dcccAE20dd7D3Cd751168d0C',
     'marketplace'
   );
 
@@ -64,6 +64,7 @@ const Marketplace = () => {
         <div className='grid grid-cols-4 gap-4 justify-center items-center'>
           {
             sales.map((sale: any) => (
+			!sale.buyer &&
               <>
                 <Link href={`/listing/${sale.id}`} key={sale.id}>
                 <NFTCard

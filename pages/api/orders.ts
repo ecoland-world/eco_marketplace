@@ -12,7 +12,7 @@ export default function handler(
   const provider = new ethers.providers.AlchemyProvider("maticmum", process.env.MUMBAI_ALCHEMY_KEY);
   const db = Database.readOnly("maticmum"); // Polygon Mumbai testnet
 
-  const tableName = "eco_mkt_80001_5797"
+  const tableName = "eco_mkt_80001_5825"
   let response: any= {}
 
     async function initialLoad(){
